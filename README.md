@@ -30,6 +30,8 @@ qiime info
 Download tag-sequencing data from SRA  
 
 First search for sequences by BioProject. Example screenshot of how to download the ```SraRunInfo.csv``` table. This table is also included in this repo as an example. Use the R script to generate a bash script to download all the sequences.
+![BioprojResults-SRA](images/sra.png)
+
 ```
 cd tagseq-qiime2-snakemake/raw_data/
 Rscript extra-sra.R
