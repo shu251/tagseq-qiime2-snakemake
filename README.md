@@ -38,3 +38,13 @@ Rscript extra-sra.R
 bash download_read1.sh
 bash download_read2.sh
 ```
+
+
+Create ```manifest.txt``` for input into qiime2
+
+This code generates a manifest file based on all the fastq files downloaded into the raw_dir. It also parses sample names to generate the sample-id for the manifest list. The sample ID information is dependent on how the fastq files were downloaded, thus this code is specific to the 'extract-sra.R' and subsequent download process.
+
+```
+# Run R script
+Rscript write-manifest.R
+```
