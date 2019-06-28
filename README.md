@@ -38,11 +38,14 @@ nano download.sh
 bash download.sh
 ```
 
-## Create ```manifest.txt``` for input into qiime2
-
-This code generates a manifest file based on all the fastq files downloaded into the raw_dir. It also parses sample names to generate the sample-id for the manifest list. The sample ID information is dependent on how the fastq files were downloaded, thus this code is specific to the 'extract-sra.R' and subsequent download process.
-
+## Create required files for input into QIIME2 and snakemake
+The ```write-manifest.R` script will input the list of fastq files it finds in ```raw_data/` to generate a QIIME2 specific manifest file (manifest.txt), a list of SRR IDs extracted from the SraRunInfo.csv file, and a list of sample IDs.
 ```
 # Run R script
 Rscript write-manifest.R
+
+# outputs:
+## manifest.txt
+## SampleList.txt
+## SRRList.txt
 ```

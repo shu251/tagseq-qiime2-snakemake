@@ -23,9 +23,11 @@ manifest$direction<-ifelse(grepl("_1.fastq.gz", manifest$`absolute-filepath`),"f
 # Write output as a manifest file
 write.table(manifest, "manifest.txt",quote=FALSE,col.names=TRUE,row.names=FALSE,sep=",")
 
-write.table(manifest, "SampleList.txt",quote=FALSE,col.names=TRUE,row.names=FALSE,sep="\t")
 
-write.table(paths_run$Run, "SRRList.txt",quote=FALSE,col.names=FALSE,row.names=FALSE,sep="\t")
+# Generate sample list:
+sample_list <- data.frame(paths_runinfo$SampleName, paths_runinfo$Run)
+colnames(sample_list)[1:2]<-c("SampleName", "Run")
+write.table(sample_list, "SampleList.txt",quote=FALSE,col.names=TRUE,row.names=FALSE,sep="\t")
 
 # First line must include the column headers
 # Example:
