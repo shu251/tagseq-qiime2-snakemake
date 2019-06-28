@@ -1,0 +1,8 @@
+proj_name: Diel_18S
+scratch:  /vortexfs1/scratch/sarahhu
+sample_suffix: Diel_18S_survey_SCOPE_cruise_July_2015
+outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/
+primerF: CCAGCASCYGCGGTAATTCC
+primerR: ACTTTCGTTCTTGATYRA
+raw_data: raw_data
+input_seq: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/SampleList.txt
