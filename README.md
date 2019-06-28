@@ -57,5 +57,6 @@ Snakemake pipeline performs fastqc on all raw reads. Then uses trimmomatic to re
 
 
 ```
-snakemake
+snakemake --use-conda
+# Error message related to how snakemake is reading in conda (finding?) conda environment
 ```
