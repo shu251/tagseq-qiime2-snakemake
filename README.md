@@ -39,7 +39,7 @@ bash download.sh
 ```
 
 ## Create required files for input into QIIME2 and snakemake
-The ```write-manifest.R` script will input the list of fastq files it finds in ```raw_data/` to generate a QIIME2 specific manifest file (manifest.txt), a list of SRR IDs extracted from the SraRunInfo.csv file, and a list of sample IDs.
+The ```write-manifest.R``` script will input the list of fastq files it finds in ```raw_data/``` to generate a QIIME2 specific manifest file (manifest.txt) and a text file with the SRR ID list for input into snakemake and a corresponding list of sample names.
 ```
 # Run R script
 Rscript write-manifest.R
@@ -47,5 +47,15 @@ Rscript write-manifest.R
 # outputs:
 ## manifest.txt
 ## SampleList.txt
-## SRRList.txt
+```
+
+
+## Run quality control and trimming
+Modify config.yaml file to include path to raw sequences and where output trimming and QC files will be written to.
+
+Snakemake pipeline performs fastqc on all raw reads. Then uses trimmomatic to remove barcodes and repeats the fastqc post-trimming. Finally, uses data from fastqc runs to generate a multiqc report.
+
+
+```
+snakemake
 ```
