@@ -35,6 +35,7 @@ rule all:
     table = expand("{base}/asv/{project}-asv-table.qza", base = SCRATCH, project = PROJ),
     rep = expand("{base}/asv/{project}-rep-seqs.qza", base = SCRATCH, project = PROJ),
     stats = expand("{base}/asv/{project}-stats-dada2.qza", base = SCRATCH, project = PROJ),
+    move = expand("{outputdir}", outputdir = OUTPUTDIR)
 
 rule import_qiime:
   input:
@@ -94,3 +95,13 @@ rule dada2:
 	--o-table {output.table} \
 	--o-representative-sequences {output.rep} \
 	--o-denoising-stats {output.stats}"
+
+rule mv:
+  input:
+    SCRATCH + "/asv"
+  output:
+    OUTPUTDIR
+  shell:
+    """
+    mv -r {input} {output}
+    """

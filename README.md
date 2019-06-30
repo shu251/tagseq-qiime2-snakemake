@@ -47,6 +47,12 @@ Rscript write-manifest.R
 # outputs:
 ## manifest.txt
 ## SampleList.txt
+
+#
+# Note to update this later to input trimmed reads
+#
+
+
 ```
 
 
@@ -59,22 +65,24 @@ Snakemake pipeline performs fastqc on all raw reads. Then uses trimmomatic to re
 ```
 snakemake --use-conda
 # Error message related to how snakemake is reading in conda (finding?) conda environment
+
+#
+# Issue with conda - snakemake versions not compatible
+#
+
+
 ```
 
 
-### Now we have trimmed reads
+## Generate ASVs
+Run write-manifest.R script to input trimmed reads instead of raw fastq reads.  
 
+Update ```config.yaml``` with preferences for how DADA2 will trim, denoise, chimera check, and perform ASV determination.
 
-### Run write-manifest.R script
+For more information ```qiime dada2 denoise-paired --help```
 
-
-### DADA2 specs
-
-```
-qiime dada2 denoise-paired --help # for help menu
 ```
 # Modify the config.yml file to add your preferences for each flag:
-
 #Truncate sequences at the 3' end when sequence quality may decrease
 --p-trunc-len-f #forward read truncation
 --p-trunc-len-r #reverse read truncation
@@ -94,13 +102,30 @@ qiime dada2 denoise-paired --help # for help menu
 
 #Number of reads to consider in training set for error model
 --p-n-reads-learn # defaul is 1 million
+```
 
-# Feature table - or 'OTU/ASV table'
---o-table
+Output from dada2 pipeline is 3 QIIME2 artifacts:
+* A feature table - or 'OTU/ASV table' ```--o-table```
+* A table of the representative sequences for the feature table ```--o-representative-sequences```
+* Statistics related to denoising and ASV determination ```--o-denoising-stats```
 
-# Representative sequences for the feature table
---o-representative-sequences ARTIFACT FeatureData[Sequence]
 
-# Statistics output
---o-denoising-stats
+## Visualization QIIME2 run so far
+Next add the summarization features to get .qzv files.. see previous documentation on these visualizations
 
+## Assign taxonomy
+Assign taxonomy - link to db-build repo and introduce 2 ways to perform this
+  Add to snakefile, provide the option for the user to specify sklearn or the consensus-vsearch option?
+
+
+## Generate output tables
+show commands - add to Snakefile
+
+## Compile taxonomy and count tables
+R script for this
+
+
+
+### TROUBLESHOOTING
+* conda and snakemake version control? only applies to wrapper usage, but anticipate it will become a larger issue
+* mv to separate directory? wasn't there an issue before
