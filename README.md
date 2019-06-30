@@ -60,3 +60,47 @@ Snakemake pipeline performs fastqc on all raw reads. Then uses trimmomatic to re
 snakemake --use-conda
 # Error message related to how snakemake is reading in conda (finding?) conda environment
 ```
+
+
+### Now we have trimmed reads
+
+
+### Run write-manifest.R script
+
+
+### DADA2 specs
+
+```
+qiime dada2 denoise-paired --help # for help menu
+```
+# Modify the config.yml file to add your preferences for each flag:
+
+#Truncate sequences at the 3' end when sequence quality may decrease
+--p-trunc-len-f #forward read truncation
+--p-trunc-len-r #reverse read truncation
+
+#Trim forward and reverse reads at 5' end based on quality
+--p-trim-left-f #forward read trim
+--p-trim-left-r #reverse read trim
+
+#Quality threshold for above trimming
+--p-trunc-q
+
+#Any reads with expected error higher than this value will be removed
+--p-max-ee
+
+#Choice of chimera removal - Choices('pooled', 'none', 'consensus')
+--p-chimera-method
+
+#Number of reads to consider in training set for error model
+--p-n-reads-learn # defaul is 1 million
+
+# Feature table - or 'OTU/ASV table'
+--o-table
+
+# Representative sequences for the feature table
+--o-representative-sequences ARTIFACT FeatureData[Sequence]
+
+# Statistics output
+--o-denoising-stats
+

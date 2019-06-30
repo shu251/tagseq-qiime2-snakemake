@@ -6,3 +6,18 @@ primerF: CCAGCASCYGCGGTAATTCC
 primerR: ACTTTCGTTCTTGATYRA
 raw_data: raw_data
 input_seq: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/SampleList.txt
+manifest: manifest.txt
+
+# QIIME2-specific flags
+## Primer removal
+primer_err: 0.4
+primer_overlap: 3
+
+
+## DADA2 - ASV flags
+truncation_err: 2
+truncation_len-f: 200
+truncation_len-r: 200
+quality_err: 2
+training: 1000 #should be set higher for a non-test dataset
+chimera: pooled

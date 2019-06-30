@@ -1,4 +1,4 @@
-# Snakemake file to QC tag-sequence reads
+# Snakemake file to generate ASVs from trimmed reads
 configfile: "config.yaml"
 
 import io 
@@ -20,45 +20,77 @@ SAMPLE_NAME = list(SAMPLE_TABLE.SampleName)
 SAMPLE_SUFFIX = config["sample_suffix"]
 OUTPUTDIR = config["outputDIR"]
 
+# ASV specific:
+MANIFEST = config["manifest"]
+PRIMER_F = config["primerF"]
+PRIMER_R = config["primerR"]
+
+
 #----DEFINE RULES----#
 
 rule all:
   input:
-    html = expand("{scratch}/qc/fastqc/{sample}_{suf}_{num}_fastqc.html", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2]),
-    # Trimmed read output
-    r1 = expand("{scratch}/trimmed/{sample}_1.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
-    r2 = expand("{scratch}/trimmed/{sample}_2.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
-    # reads where trimming entirely removed the mate
-    r1_unpaired = expand("{scratch}/trimmed/{sample}_1.unpaired.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
-    r2_unpaired = expand("{scratch}/trimmed/{sample}_2.unpaired.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
+    import_qza = expand("{base}/asv/{project}-PE-demux.qza", base = SCRATCH, project = PROJ),
+    rm_primers = expand("{base}/asv/{project}-PE-demux-noprimer.qza", base = SCRATCH, project = PROJ),
+    table = expand("{base}/asv/{project}-asv-table.qza", base = SCRATCH, project = PROJ),
+    rep = expand("{base}/asv/{project}-rep-seqs.qza", base = SCRATCH, project = PROJ),
+    stats = expand("{base}/asv/{project}-stats-dada2.qza", base = SCRATCH, project = PROJ),
 
-rule fastqc:
-  input:    
-    expand("{rawfastq}/{sample}_{suf}_{num}.fastq.gz", rawfastq = INPUTDIR, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2])
-  output:
-    html = expand("{scratch}/qc/fastqc/{sample}_{suf}_{num}_fastqc.html", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2]),
-    zip = expand("{scratch}/qc/fastqc/{sample}_{suf}_{num}_fastqc.zip", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2])
-  params: ""
-  log:
-    expand("{scratch}/qc/fastqc/logs/{sample}_{suf}_{num}_fastqc.log", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2])
-  wrapper:
-    "0.35.1/bio/fastqc"
-# Error in how snakemake finds this env?
-
-rule trimmomatic_pe:
+rule import_qiime:
   input:
-    r1 = expand("{rawfastq}/{sample}_{suf}_1.fastq.gz", rawfastq = INPUTDIR, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX),
-    r2 = expand("{rawfastq}/{sample}_{suf}_2.fastq.gz", rawfastq = INPUTDIR, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX)
+    manifest = MANIFEST
   output:
-    r1 = "{scratch}/trimmed/{sample}_1.fastq.gz",
-    r2 = "{scratch}/trimmed/{sample}_2.fastq.gz",
-    # reads where trimming entirely removed the mate
-    r1_unpaired = "{scratch}/trimmed/{sample}_1.unpaired.fastq.gz",
-    r2_unpaired = "{scratch}/trimmed/{sample}_2.unpaired.fastq.gz"
+    SCRATCH + "/asv/{project}-PE-demux.qza"
   log:
-   "{scratch}/trimmed/logs/trimmomatic/{sample}.log"
-  params:
-    trimmer = ["LEADING:2", "TRAILING:2", "SLIDINGWINDOW:4:2", "MINLEN:25"],
-    extra = ""
-  wrapper:
-   "0.35.1/bio/trimmomatic/pe"
+    SCRATCH + "/logs/qiime2/{project}_q2.log"
+  shell:
+   "qiime tools import \
+       --type 'SampleData[PairedEndSequencesWithQuality]' \
+       --input-path {input.manifest} \
+       --output-path {output} \
+       --input-format PairedEndFastqManifestPhred33"
+#
+# As of 6/30/2019 only using raw input fastq - need to change to trimmed reads as input for manifest 
+#
+
+rule rm_primers:
+  input:
+    raw = SCRATCH + "/asv/{project}-PE-demux.qza"
+  output:
+    SCRATCH + "/asv/{project}-PE-demux-noprimer.qza"
+  log:
+    SCRATCH + "/logs/qiime2/{project}_primer_q2.log"
+  shell:
+    "qiime cutadapt trim-paired \
+       --i-demultiplexed-sequences {input.raw} \
+       --p-front-f {config[primerF]} \
+       --p-front-r {config[primerR]} \
+       --p-error-rate {config[primer_err]} \
+       --p-overlap {config[primer_overlap]} \
+       --o-trimmed-sequences {output}"
+
+#
+# I'd like to add a move to main directory step here, rather than working from scratch? advisable?
+#
+
+rule dada2:
+  input:
+    SCRATCH + "/asv/{project}-PE-demux-noprimer.qza"
+  output:
+    table = SCRATCH + "/asv/{project}-asv-table.qza",
+    rep = SCRATCH + "/asv/{project}-rep-seqs.qza",
+    stats = SCRATCH + "/asv/{project}-stats-dada2.qza"
+  log:
+    SCRATCH + "/logs/qiime2/{project}_dada2_q2.log"
+  shell:
+    "qiime dada2 denoise-paired \
+  	--i-demultiplexed-seqs {input} \
+	--p-trunc-q {config[truncation_err]} \
+	--p-trunc-len-f {config[truncation_len-f]} \
+	--p-trunc-len-r {config[truncation_len-r]} \
+	--p-max-ee {config[quality_err]} \
+	--p-n-reads-learn {config[training]} \
+	--p-chimera-method {config[chimera]} \
+	--o-table {output.table} \
+	--o-representative-sequences {output.rep} \
+	--o-denoising-stats {output.stats}"
