@@ -35,11 +35,11 @@ rule all:
     table = expand("{base}/asv/{project}-asv-table.qza", base = SCRATCH, project = PROJ),
     rep = expand("{base}/asv/{project}-rep-seqs.qza", base = SCRATCH, project = PROJ),
     stats = expand("{base}/asv/{project}-stats-dada2.qza", base = SCRATCH, project = PROJ),
-    move = expand("{outputdir}", outputdir = OUTPUTDIR)
+#    move = expand("{outputdir}", outputdir = OUTPUTDIR)
 
 rule import_qiime:
   input:
-    manifest = MANIFEST
+    MANIFEST
   output:
     SCRATCH + "/asv/{project}-PE-demux.qza"
   log:
@@ -47,7 +47,7 @@ rule import_qiime:
   shell:
    "qiime tools import \
        --type 'SampleData[PairedEndSequencesWithQuality]' \
-       --input-path {input.manifest} \
+       --input-path {input} \
        --output-path {output} \
        --input-format PairedEndFastqManifestPhred33"
 #
@@ -96,12 +96,12 @@ rule dada2:
 	--o-representative-sequences {output.rep} \
 	--o-denoising-stats {output.stats}"
 
-rule mv:
-  input:
-    SCRATCH + "/asv"
-  output:
-    OUTPUTDIR
-  shell:
-    """
-    mv -r {input} {output}
-    """
+#rule mv:
+#  input:
+#    SCRATCH + "/asv"
+#  output:
+#    OUTPUTDIR
+#  shell:
+#    """
+#    mv -r {input} {output}
+#    """
