@@ -13,8 +13,11 @@ paths_run <- paths %>% mutate(Run = str_replace(`absolute-filepath`, "raw_data/S
 
 # Join with sample name from Sra table
 paths_runinfo <- inner_join(paths_run, samplename, by="Run")
+paths_runinfo$pre_path <- paste(getwd(), "/", sep="") # add prefix so final path will be absolut
+paths_runinfo$PATH <- paste(paths_runinfo$pre_path, paths_runinfo$`absolute-filepath`, sep="")
 
-manifest <- data.frame(paths_runinfo$SampleName, paths_runinfo$`absolute-filepath`)
+manifest <- data.frame(paths_runinfo$SampleName, paths_runinfo$PATH)
+
 colnames(manifest)[1:2]<-c("sample-id","absolute-filepath")
 
 # if _1.fastq.gz fill new column with forward, else reverse
