@@ -1,11 +1,10 @@
 proj_name: Diel_18S
-scratch:  /vortexfs1/scratch/sarahhu
+scratch:  /vortexfs1/scratch/halexander
 sample_suffix: Diel_18S_survey_SCOPE_cruise_July_2015
-outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/
+outputDIR: /vortexfs1/omics/alexander/shu/tagseq-qiime2-snakemake/test/
 primerF: CCAGCASCYGCGGTAATTCC
 primerR: ACTTTCGTTCTTGATYRA
 raw_data: raw_data
-input_seq: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/SampleList.txt
 manifest: manifest.txt
 
 # QIIME2-specific flags
