@@ -42,9 +42,7 @@ rule fastqc:
   log:
     expand("{scratch}/qc/fastqc/logs/{sample}_{suf}_{num}_fastqc.log", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2])
   wrapper:
-    "0.27.1/bio/fastqc"
-#    "0.35.1/bio/fastqc"
-# Error in how snakemake finds this env?
+    "0.35.1/bio/fastqc"
 
 rule trimmomatic_pe:
   input:
@@ -62,5 +60,4 @@ rule trimmomatic_pe:
     trimmer = ["LEADING:2", "TRAILING:2", "SLIDINGWINDOW:4:2", "MINLEN:25"],
     extra = ""
   wrapper:
-    "0.27.1/bio/trimmomatic/pe"
-#   "0.35.1/bio/trimmomatic/pe"
+   "0.35.1/bio/trimmomatic/pe"
