@@ -28,9 +28,10 @@ write.table(manifest, "manifest.txt",quote=FALSE,col.names=TRUE,row.names=FALSE,
 
 
 # Generate sample list:
-sample_list <- data.frame(paths_runinfo$SampleName, paths_runinfo$Run)
-colnames(sample_list)[1:2]<-c("SampleName", "Run")
-write.table(sample_list, "SampleList.txt",quote=FALSE,col.names=TRUE,row.names=FALSE,sep="\t")
+sample_list1 <- data.frame(paths_runinfo$SampleName, paths_runinfo$Run)
+colnames(sample_list1)[1:2]<-c("SampleName", "Run")
+sample_list2 <- unique(sample_list1)
+write.table(sample_list2, "SampleList.txt",quote=FALSE,col.names=TRUE,row.names=FALSE,sep="\t")
 
 # First line must include the column headers
 # Example:
