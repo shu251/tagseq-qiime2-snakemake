@@ -43,23 +43,42 @@ The ```write-manifest.R``` script will input the list of fastq files it finds in
 ```
 # Run R script
 Rscript write-manifest.R
-
-# outputs:
-## manifest.txt
-## SampleList.txt
-
-#
-# Note to update this later to input trimmed reads
-#
+```
+_Output files_  
+* ```manifest.txt```: this is the manifest file you are looking for. However, the file path leads to the raw fastq reads before trimming. We will fix this later in the Snakefile. Alternatively, please manually alter OR create this file so you fill in your desired sample names in the first column, the full path to the fastq reads you want to make ASVs from, and the last column states the direction of the paired read
+* ```SampleList.txt```: simply a list of the SRR IDs and the sample names you actually get from the SraRunInfo.csv file you can download from SRA/NCBI.
 
 
+## Modify your config file
+Open and take a look at ```config.yaml```. Below is a breakdown of the config file as you will need to modify this to fit your needs before running Snakemake with your data. 
+This config.yaml file is set up to run with the test sequences downloaded from above
+```
+proj_name: Diel_18S # Replace this with your project name. This will be what the final ASV qiime2 artifact and ASV table is named.
+scratch:  /vortexfs1/scratch/sarahhu # Change this to where you want all your outputs to be written. Since I am working on a HPC, I write all of this to scratch and move it later.
+outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake
+primerF: CCAGCASCYGCGGTAATTCC # Forward primer sequence
+primerR: ACTTTCGTTCTTGATYRA # Reverse primer sequence
+manifest: manifest.txt #Input of manifest file that you need to provide. Or use the R script written above to generate this file
+sample_names: SampleList.txt #Sample list output from the R script used above
+manifest-trimmed: manifest-trimmed.txt # Final manifest file, the Snakemake pipeline will create this file, as the first few steps generate the trimmed fastq files which we ACTUALLY want to use in the QIIME2 part, so the Snakemake file is written to input your manifest file and modify the filepath
+
+# QIIME2-specific flags
+## Primer removal
+primer_err: 0.4
+primer_overlap: 3
+
+
+## DADA2 - ASV flags
+truncation_err: 2
+truncation_len-f: 200
+truncation_len-r: 200
+quality_err: 2
+training: 1000 #should be set higher for a non-test dataset
+chimera: pooled
 ```
 
+## Execute Snakemake to run everything
 
-## Run quality control and trimming
-Modify config.yaml file to include path to raw sequences and where output trimming and QC files will be written to.
-
-Snakemake pipeline performs fastqc on all raw reads. Then uses trimmomatic to remove barcodes and repeats the fastqc post-trimming. Finally, uses data from fastqc runs to generate a multiqc report.
 
 
 ```
