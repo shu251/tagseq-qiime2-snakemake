@@ -17,10 +17,10 @@ git clone https://github.com/shu251/tagseq-qiime2-snakemake.git
 cd tagseq-qiime2-snakemake
 
 # Create conda environment
-conda env create -f /envs/snake-18S-env.yaml --name snake-18S 
+conda env create --name snake-tagseq --file envs/snake.yaml 
 
 # Enter environment
-source activate snake-18S
+source activate snake-tagseq
 
 # Check versions and correct environment set up
 snakemake --version
