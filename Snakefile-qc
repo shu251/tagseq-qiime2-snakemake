@@ -12,37 +12,55 @@ from snakemake.exceptions import print_exception, WorkflowError
 PROJ = config["proj_name"]
 INPUTDIR = config["raw_data"]
 SCRATCH = config["scratch"]
+OUTPUTDIR = config["outputDIR"]
 
-# use glob statement to find all samples and then take a set of the SAMPLELIST to get unique names to pass to snakemake
+# Use glob statement to find all samples in 'raw_data' directory
 SAMPLE_LIST,NUMS = glob_wildcards("raw_data/{sample}_{num}.fastq.gz")
+# Unique the output variables from glob_wildcards
 SAMPLE_SET = set(SAMPLE_LIST)
 SET_NUMS = set(NUMS)
-OUTPUTDIR = config["outputDIR"]
+
+# Create final manifest file
+SAMPLE_TABLE = pd.read_table(config["sample_names"]) #import samplelist
+SAMPLE_LIST = list(SAMPLE_TABLE.Run) #isolate SRR Ids, column 'Run'
+SAMPLE_NAME = list(SAMPLE_TABLE.SampleName) #isolate sample names, column 'SampleName'
+SAMPLE_FULL = list()
+MANIFEST = pd.read_csv = (config["manifest"]) #Import manifest
+MANIFEST['filename']=MANIFEST['absolute-filepath'].str.split('/').str[-1] #add new column with only file name
+MANIFEST.rename(columns = {'absolute-filepath':'rawreads-filepath'}, inplace = True)
+PATH_TRIMMED = "trimmed" # name of directory with trimmed reads
+NEWPATH = os.path.join(SCRATCH, trimmed)
+MANIFEST['absolute-filepath'] = NEWPATH+ "/" + MANIFEST['filename']    
+MANIFEST[['sample-id','absolute-filepath','direction']].set_index('sample-id').to_csv('final-manifest.csv')
+MANIFEST_FINAL = config["manifest-trimmed"]
 
 #----DEFINE RULES----#
 
 rule all:
   input:
+    # fastqc output before trimming
+    html = expand("{scratch}/fastqc/{sample}_{num}_fastqc.html", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    zip = expand("{scratch}/fastqc/{sample}_{num}_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    orig_html = SCRATCH + "/fastqc/raw_multiqc.html",
+    orig_stats = SCRATCH + "/fastqc/raw_multiqc_general_stats.txt",
+    # Trimmed data output
     trimmedData = expand("{scratch}/trimmed/{sample}_{num}.fastq.gz", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS), 
-#html = expand("{scratch}/qc/fastqc/{sample}_{suf}_{num}_fastqc.html", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2]),
-    # Trimmed read output
- #   r1 = expand("{scratch}/trimmed/{sample}_1.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
-  #  r2 = expand("{scratch}/trimmed/{sample}_2.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
-    # reads where trimming entirely removed the mate
-#    r1_unpaired = expand("{scratch}/trimmed/{sample}_1.unpaired.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
-#    r2_unpaired = expand("{scratch}/trimmed/{sample}_2.unpaired.fastq.gz", scratch = SCRATCH, sample = SAMPLE_LIST),
+    html_trim = expand("{scratch}/fastqc/{sample}_{num}_trimmed_fastqc.html", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    zip_trim = expand("{scratch}/fastqc/{sample}_{num}_trimmed_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    trim_html = SCRATCH + "/fastqc/trimmed_multiqc.html",
+    trim_stats = SCRATCH + "/fastqc/trimmed_multiqc_general_stats.txt" 
 
-#rule fastqc:
-#  input:    
-#    expand("{rawfastq}/{sample}_{suf}_{num}.fastq.gz", rawfastq = INPUTDIR, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2])
-#  output:
-#    html = expand("{scratch}/qc/fastqc/{sample}_{suf}_{num}_fastqc.html", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2]),
-#    zip = expand("{scratch}/qc/fastqc/{sample}_{suf}_{num}_fastqc.zip", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2])
-#  params: ""
-#  log:
- #   expand("{scratch}/qc/fastqc/logs/{sample}_{suf}_{num}_fastqc.log", scratch = SCRATCH, sample = SAMPLE_LIST, suf = SAMPLE_SUFFIX, num = [1,2])
- # wrapper:
- #   "0.35.1/bio/fastqc"
+rule fastqc:
+  input:    
+    INPUTDIR + "/{sample}_{num}.fastq.gz"
+  output:
+    html = SCRATCH + "/fastqc/{sample}_{num}_fastqc.html",
+    zip = SCRATCH + "/fastqc/{sample}_{num}_fastqc.zip"
+  params: ""
+  log:
+    SCRATCH + "/logs/fastqc/{sample}_{num}.log"
+  wrapper:
+    "0.35.2/bio/fastqc"
 
 rule trimmomatic_pe:
   input:
@@ -60,4 +78,41 @@ rule trimmomatic_pe:
     trimmer = ["LEADING:2", "TRAILING:2", "SLIDINGWINDOW:4:2", "MINLEN:25"],
     extra = ""
   wrapper:
-    "0.27.1/bio/trimmomatic/pe"
+    "0.35.2/bio/trimmomatic/pe"
+
+rule fastqc_trim:
+  input:
+    SCRATCH + "/trimmed/{sample}_{num}.fastq.gz"
+  output:
+    html = SCRATCH + "/fastqc/{sample}_{num}_trimmed_fastqc.html",
+    zip = SCRATCH + "/fastqc/{sample}_{num}_trimmed_fastqc.zip"
+  params: ""
+  log:
+    SCRATCH + "/logs/fastqc/{sample}_{num}_trimmed.log"
+  wrapper:
+    "0.35.2/bio/fastqc"
+
+rule multiqc:
+  input:
+    orig = expand("{scratch}/fastqc/{sample}_{num}_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    trimmed = expand("{scratch}/fastqc/{sample}_{num}_trimmed_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS)
+  output:
+    orig_html = SCRATCH + "/fastqc/raw_multiqc.html", 
+    orig_stats = SCRATCH + "/fastqc/raw_multiqc_general_stats.txt",
+    trim_html = SCRATCH + "/fastqc/trimmed_multiqc.html", 
+    trim_stats = SCRATCH + "/fastqc/trimmed_multiqc_general_stats.txt"
+  conda:
+   "envs/multiqc-env.yaml"
+  shell: 
+    """
+    multiqc -n multiqc.html {input.orig} #run multiqc
+    mv multiqc.html {output.orig_html} #rename html
+    mv multiqc_data/multiqc_general_stats.txt {output.orig_stats} #move and rename stats
+    rm -rf multiqc_data #clean-up
+    #repeat for trimmed data
+    multiqc -n multiqc.html {input.trimmed} #run multiqc
+    mv multiqc.html {output.trim_html} #rename html
+    mv multiqc_data/multiqc_general_stats.txt {output.trim_stats} #move and rename stats
+    rm -rf multiqc_data	#clean-up
+    """ 
+
