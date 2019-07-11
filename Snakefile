@@ -36,6 +36,11 @@ MANIFEST['absolute-filepath'] = NEWPATH+ "/" + MANIFEST['filename']
 MANIFEST[['sample-id','absolute-filepath','direction']].set_index('sample-id').to_csv('manifest-trimmed.txt')
 MANIFEST_FINAL = config["manifest-trimmed"]
 
+
+# Database information to assign taxonomy
+DB_classifier = config["database"]
+
+
 #----DEFINE RULES----#
 
 rule all:
@@ -56,8 +61,14 @@ rule all:
     q2_primerRM = SCRATCH + "/qiime2/asv/" + PROJ + "-PE-demux-noprimer.qza",
     table = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.qza",
     rep = SCRATCH + "/qiime2/asv/" + PROJ + "-rep-seqs.qza",
-    stats = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qza"
-    
+    stats = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qza",
+    sklearn = SCRATCH + "/qiime2/asv/" + PROJ +	"-tax_sklearn.qza",
+    biom = SCRATCH + "/qiime2/asv/table/feature-table.biom",
+#    table_dir = directory(SCRATCH + "/qiime2/asv/table"),
+    table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
+#    tax_dir = directory(SCRATCH + "/qiime2/asv/tax_dir")
+    table_tax = SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv"
+
 rule fastqc:
   input:    
     INPUTDIR + "/{sample}_{num}.fastq.gz"
@@ -181,3 +192,56 @@ rule dada2:
         --o-table {output.table} \
         --o-representative-sequences {output.rep} \
         --o-denoising-stats {output.stats}"
+
+rule assign_tax:
+  input:
+    rep = SCRATCH + "/qiime2/asv/" + PROJ + "-rep-seqs.qza",
+    db_classified = DB_classifier
+  output:
+    sklearn = SCRATCH + "/qiime2/asv/" + PROJ + "-tax_sklearn.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_sklearn_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime feature-classifier classify-sklearn \
+	--i-classifier {input.db_classified} \
+	--i-reads {input.rep} \
+	--o-classification {output.sklearn}"
+
+rule gen_table:
+  input:
+    table = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.qza"
+  output:
+    SCRATCH + "/qiime2/asv/table/feature-table.biom"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_exportBIOM_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime tools export --input-path {input.table} --output-path table"
+
+rule convert:
+  input:
+    SCRATCH + "/qiime2/asv/table/feature-table.biom"
+  output:
+    SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_exportTSV_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "biom convert -i {input} -o {output} --to-tsv"
+
+rule gen_tax:
+  input:
+    sklearn = SCRATCH + "/qiime2/asv/" + PROJ + "-tax_sklearn.qza"
+  output:
+    SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_exportTAXTSV_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime tools export --input-path {input.sklearn} --output-path tax_dir"
+
