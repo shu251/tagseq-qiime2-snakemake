@@ -128,6 +128,7 @@ R script for this
 
 
 ### To do:
+* *Error with Child-Parent directory-file issue on the last few rules to export qiime2 information*
 * move things to output dir
 * enter provided R environment and run R script to compile output tax and asv information, link to other tutorial
 * check to see how directory stuff is set up.. ok?
