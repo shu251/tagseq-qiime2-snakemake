@@ -64,9 +64,7 @@ rule all:
     stats = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qza",
     sklearn = SCRATCH + "/qiime2/asv/" + PROJ +	"-tax_sklearn.qza",
     biom = SCRATCH + "/qiime2/asv/table/feature-table.biom",
-#    table_dir = directory(SCRATCH + "/qiime2/asv/table"),
     table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
-#    tax_dir = directory(SCRATCH + "/qiime2/asv/tax_dir")
     table_tax = SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv"
 
 rule fastqc:
@@ -213,13 +211,15 @@ rule gen_table:
   input:
     table = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.qza"
   output:
-    SCRATCH + "/qiime2/asv/table/feature-table.biom"
+    table_tsv = SCRATCH + "/qiime2/asv/table/feature-table.biom"
   log:
     SCRATCH + "/qiime2/logs/" + PROJ + "_exportBIOM_q2.log"
   conda:
     "envs/qiime2-2019.4.yaml"
+  params:
+    directory(SCRATCH + "/qiime2/asv/table")
   shell:
-    "qiime tools export --input-path {input.table} --output-path table"
+    "qiime tools export --input-path {input.table} --output-path {params}"
 
 rule convert:
   input:
@@ -237,11 +237,13 @@ rule gen_tax:
   input:
     sklearn = SCRATCH + "/qiime2/asv/" + PROJ + "-tax_sklearn.qza"
   output:
-    SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv"
+    table_tax = SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv"
   log:
     SCRATCH + "/qiime2/logs/" + PROJ + "_exportTAXTSV_q2.log"
   conda:
     "envs/qiime2-2019.4.yaml"
+  params:
+    directory(SCRATCH + "/qiime2/asv/tax_dir")
   shell:
-    "qiime tools export --input-path {input.sklearn} --output-path tax_dir"
+    "qiime tools export --input-path {input.sklearn} --output-path {params}"
 

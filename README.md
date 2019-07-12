@@ -111,13 +111,20 @@ chimera: pooled
 --p-n-reads-learn # defaul is 1 million
 ```
 
-## Visualization QIIME2 run so far
-Next add the summarization features to get .qzv files.. see previous documentation on these visualizations
+Ahead of running this pipeline, prepare a database so the reference sequences can be assigned a taxonomy.
+You can use [this pipeline](https://github.com/shu251/db-build-microeuks) to do this.
+*In the config.yaml file*, change this line to direct the Snakefile to where your database is stored.
+```
+## Database
+database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.11.1-classifier.qza
+```
 
 ## Assign taxonomy
-Assign taxonomy - link to db-build repo and introduce 2 ways to perform this
-  Add to snakefile, provide the option for the user to specify sklearn or the consensus-vsearch option?
+The Snakefile will assign taxonomy based on the database you provide it and specify in the config file.
+To date, this pipeline relies on a classified database to assign taxonomy to the reference sequences.
 
+## Visualize results of QIIME2 run
+Next add the summarization features to get .qzv files.. see previous documentation on these visualizations
 
 ## Generate output tables
 show commands - add to Snakefile
@@ -128,10 +135,10 @@ R script for this
 
 
 ### To do:
-* *Error with Child-Parent directory-file issue on the last few rules to export qiime2 information*
 * move things to output dir
 * enter provided R environment and run R script to compile output tax and asv information, link to other tutorial
 * check to see how directory stuff is set up.. ok?
 * add visualization rule to generate all the qzv files...
 * How to select or skip steps? i.e. don't repeat dada2? dont do triming and fastqc step?
+* _potentially use ```ancient()```, I think there is a timestamp issue with the manifest file creation in the set variable section
 * How to add an option? Alternate snakefiles in other directories for (a) vsearch tax assignment and (b) OTU clustering?
