@@ -1,15 +1,16 @@
 proj_name: Diel_18S
+raw_data: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_data
 scratch:  /vortexfs1/scratch/sarahhu
 outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake
-primerF: CCAGCASCYGCGGTAATTCC
-primerR: ACTTTCGTTCTTGATYRA
-raw_data: raw_data
 manifest: manifest.txt
 sample_names: SampleList.txt
 manifest-trimmed: manifest-trimmed.txt
 
+
 # QIIME2-specific flags
 ## Primer removal
+primerF: CCAGCASCYGCGGTAATTCC
+primerR: ACTTTCGTTCTTGATYRA
 primer_err: 0.4
 primer_overlap: 3
 

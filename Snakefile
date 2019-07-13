@@ -16,16 +16,12 @@ SCRATCH = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
 
 # Use glob statement to find all samples in 'raw_data' directory
-SAMPLE_LIST,NUMS = glob_wildcards("raw_data/{sample}_{num}.fastq.gz")
+SAMPLE_LIST,NUMS = glob_wildcards("INPUTDIR/{sample}_{num}.fastq.gz")
 # Unique the output variables from glob_wildcards
 SAMPLE_SET = set(SAMPLE_LIST)
 SET_NUMS = set(NUMS)
 
 # Create final manifest file for qiime2
-SAMPLE_TABLE = pd.read_table(config["sample_names"]) #import samplelist
-SAMPLE_LIST = list(SAMPLE_TABLE.Run) #isolate SRR Ids, column 'Run'
-SAMPLE_NAME = list(SAMPLE_TABLE.SampleName) #isolate sample names, column 'SampleName'
-SAMPLE_FULL = list()
 MANIFEST = pd.read_csv(config["manifest"]) #Import manifest
 MANIFEST['filename'] = MANIFEST['absolute-filepath'].str.split('/').str[-1] #add new column with only file name
 MANIFEST.rename(columns = {'absolute-filepath':'rawreads-filepath'}, inplace = True)
@@ -36,18 +32,19 @@ MANIFEST['absolute-filepath'] = NEWPATH+ "/" + MANIFEST['filename']
 MANIFEST[['sample-id','absolute-filepath','direction']].set_index('sample-id').to_csv('manifest-trimmed.txt')
 MANIFEST_FINAL = config["manifest-trimmed"]
 
-
 # Database information to assign taxonomy
 DB_classifier = config["database"]
 
+# All qiime2 artifact files
+ARTIFACT = glob_wildcards("SCRATCH/qiime2/asv/PROJ-{arti}.qza")
 
 #----DEFINE RULES----#
 
 rule all:
   input:
     # fastqc output before trimming
-    html = expand("{scratch}/fastqc/{sample}_{num}_fastqc.html", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
-    zip = expand("{scratch}/fastqc/{sample}_{num}_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    html = expand("{scratch}/fastqc/{sample}_{num}_fastqc.html", scratch = SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    zip = expand("{scratch}/fastqc/{sample}_{num}_fastqc.zip", scratch = SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
     orig_html = SCRATCH + "/fastqc/raw_multiqc.html",
     orig_stats = SCRATCH + "/fastqc/raw_multiqc_general_stats.txt",
     # Trimmed data output
@@ -65,7 +62,9 @@ rule all:
     sklearn = SCRATCH + "/qiime2/asv/" + PROJ +	"-tax_sklearn.qza",
     biom = SCRATCH + "/qiime2/asv/table/feature-table.biom",
     table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
-    table_tax = SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv"
+    table_tax = SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv",
+    # q2 visualization outputs
+#    qzv = expand("{scratch}/qiime2/asv/viz/{proj}-{arti}.qzv", scratch = SCRATCH, proj = PROJ, arti = ARTIFACT)
 
 rule fastqc:
   input:    
@@ -99,7 +98,7 @@ rule trimmomatic_pe:
 
 rule fastqc_trim:
   input:
-    SCRATCH + "/trimmed/{sample}_{num}.fastq.gz"
+    SCRATCH + "/trimmed/{sample}_{num}_trim.fastq.gz"
   output:
     html = SCRATCH + "/fastqc/{sample}_{num}_trimmed_fastqc.html",
     zip = SCRATCH + "/fastqc/{sample}_{num}_trimmed_fastqc.zip"
@@ -247,3 +246,16 @@ rule gen_tax:
   shell:
     "qiime tools export --input-path {input.sklearn} --output-path {params}"
 
+#rule viz:
+#  input:
+##    qza = SCRATCH + "/qiime2/asv/{proj}-{arti}.qza"
+#    qza = expand("{scratch}/qiime2/asv/{proj}-{arti}.qza", scratch = SCRATCH, proj = PROJ, arti = ARTIFACT)
+#  output:
+##    qzv = SCRATCH + "/qiime2/asv/viz/{proj}-{arti}.qzv"
+#    qzv = expand("{scratch}/qiime2/asv/viz/{proj}-{arti}.qzv", scratch = SCRATCH, proj = PROJ, arti = ARTIFACT)
+#  log:
+#    SCRATCH + "/qiime2/logs/" + PROJ + "_viz_q2.log"
+#  conda:
+#    "envs/qiime2-2019.4.yaml"
+#  shell:
+#    "qiime demux summarize --i-data {input.qza} --o-visualization {output.qzv}"

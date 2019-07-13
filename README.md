@@ -124,7 +124,8 @@ The Snakefile will assign taxonomy based on the database you provide it and spec
 To date, this pipeline relies on a classified database to assign taxonomy to the reference sequences.
 
 ## Visualize results of QIIME2 run
-Next add the summarization features to get .qzv files.. see previous documentation on these visualizations
+
+QIIME2 offers away to visualize the data types (artifact files) using [an interative viewer](https://docs.qiime2.org/2019.4/concepts/#data-files-visualizations). An output directory of these ```.qzv``` files will be created at the end of the Snakefile run. These files can be brought locally and [drag and dropped to here](https://view.qiime2.org). 
 
 ## Generate output tables
 show commands - add to Snakefile
@@ -138,7 +139,8 @@ R script for this
 * move things to output dir
 * enter provided R environment and run R script to compile output tax and asv information, link to other tutorial
 * check to see how directory stuff is set up.. ok?
-* add visualization rule to generate all the qzv files...
+* add visualization rule to generate all the qzv files... need to fix this
+* add ```qiime feature-table``` steps (similar to qzv generation rule)
 * How to select or skip steps? i.e. don't repeat dada2? dont do triming and fastqc step?
 * _potentially use ```ancient()```, I think there is a timestamp issue with the manifest file creation in the set variable section
 * How to add an option? Alternate snakefiles in other directories for (a) vsearch tax assignment and (b) OTU clustering?
