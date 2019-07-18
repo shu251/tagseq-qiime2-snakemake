@@ -64,7 +64,7 @@ rule all:
     table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
     table_tax = SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv",
     # q2 visualization outputs
-#    qzv = expand("{scratch}/qiime2/asv/viz/{proj}-{arti}.qzv", scratch = SCRATCH, proj = PROJ, arti = ARTIFACT)
+    # qzv = expand("{scratch}/qiime2/asv/viz/{proj}-{arti}.qzv", scratch = SCRATCH, proj = PROJ, arti = ARTIFACT)
 
 rule fastqc:
   input:    
