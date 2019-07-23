@@ -1,5 +1,4 @@
 # Snakemake file - input raw fastq reads to generate Amplicon Sequence Variants
-# SHu 07-2019
 configfile: "config.yaml"
 
 import io 
@@ -36,7 +35,8 @@ MANIFEST_FINAL = config["manifest-trimmed"]
 DB_classifier = config["database"]
 
 # All qiime2 artifact files
-#ARTIFACT = glob_wildcards(SCRATCH + "/qiime2/asv/{artifact}.qza")
+ARTIFACT = glob_wildcards(SCRATCH + "/qiime2/asv/{artifact}.qza")
+print(ARTIFACT)
 
 #----DEFINE RULES----#
 
