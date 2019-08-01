@@ -34,10 +34,6 @@ MANIFEST_FINAL = config["manifest-trimmed"]
 # Database information to assign taxonomy
 DB_classifier = config["database"]
 
-# All qiime2 artifact files
-ARTIFACT = glob_wildcards(SCRATCH + "/qiime2/asv/{artifact}.qza")
-print(ARTIFACT)
-
 #----DEFINE RULES----#
 
 rule all:
@@ -63,8 +59,6 @@ rule all:
     biom = SCRATCH + "/qiime2/asv/table/feature-table.biom",
     table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
     table_tax = SCRATCH + "/qiime2/asv/tax_dir/taxonomy.tsv",
-    # q2 visualization outputs
-#    qzv = expand("{scratch}/qiime2/asv/viz/{artifact}.qzv", scratch = SCRATCH, artifact = ARTIFACT)
 
 rule fastqc:
   input:    
@@ -245,15 +239,3 @@ rule gen_tax:
     directory(SCRATCH + "/qiime2/asv/tax_dir")
   shell:
     "qiime tools export --input-path {input.sklearn} --output-path {params}"
-
-#rule viz:
-#  input:
-#    expand("{scratch}/qiime2/asv/{artifact}.qza", scratch = SCRATCH, artifact = ARTIFACT)
-#  output:
-#    SCRATCH + "/qiime2/asv/viz/{artifact}.qzv"
-#  log:
-#    SCRATCH + "/qiime2/logs/{artifact}_viz_q2.log"
-#  conda:
-#    "envs/qiime2-2019.4.yaml"
-#  shell:
-#    "qiime demux summarize --i-data {input} --o-visualization {output}"
