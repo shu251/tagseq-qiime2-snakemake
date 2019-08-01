@@ -145,49 +145,46 @@ You can use [this pipeline](https://github.com/shu251/db-build-microeuks) to do 
 database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.11.1-classifier.qza
 ```
 
-## 4. Test ```snakemake``` dry run
+## 4. Test ```snakemake``` dry run & execute full pipeline
 
 ```
 snakemake -np
 # output should be all green and display no errors
-```
+``` 
 
-## 5. Execute full pipeline
-
+To run the full pipeline make sure you enable the ```--use-conda``` flag. This is because snakemake uses the conda environments stored in ```envs/``` to execute rules.
 ```
 snakemake --use-conda
 ```
-_directions for executing using a cluster?_
 
-## 6. Output from pipeline
+[Read about executing snakemake on a cluster](https://snakemake.readthedocs.io/en/stable/executable.html)
 
-*ASV table:* ```[PROJ]-asv-table.tsv``` includes samples by columns and ASVs by row. Values represent number of sequences per ASV (row) in a given sample (column).  
-*Assigned taxonomy:* ```tax_dir/taxonomy.tsv``` represents the full taxonomic name for each ASV. The same ASV identifer (string of letters and numbers under 'Feature ID') as the asv-table.  
+## 7. Output from pipeline
+
+* **ASV table:** ```[PROJ]-asv-table.tsv``` includes samples by columns and ASVs by row. Values represent number of sequences per ASV (row) in a given sample (column).  
+* **Assigned taxonomy:** ```tax_dir/taxonomy.tsv``` represents the full taxonomic name for each ASV. The same ASV identifer (string of letters and numbers under 'Feature ID') as the asv-table.  
 
 To combine these table, you can run the R script from the ```../../qiime2/asv/``` directory.
 ```
-# Migrate to directory with .qza and .tsv outputs from snakemake pipelin
+# Migrate to directory with .qza and .tsv outputs from snakemake pipeline
 cd ../../../qiime2/asv/
 
 # Path to R script
 Rscript /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/make-asv-table.R
 ```
 
-* *CountTable-wtax-* - ASV table with counts per sample and the taxonomic identities
-* *Output_stats.txt* - quick stats on results, including how many sequences per sample, and how many ASVs with only 1 or 2 sequences are in final results
+* **CountTable-wtax** - ASV table with counts per sample and the taxonomic identities
+* **Output_stats.txt** - quick stats on results, including how many sequences per sample, and how many ASVs with only 1 or 2 sequences are in final results
 
-## 7. qiime2 visualization option
-
-_update with a separate snakemake pipeline_  
+## 8. qiime2 visualization option
 
 QIIME2 offers away to visualize the data types (artifact files) using [an interative viewer](https://docs.qiime2.org/2019.4/concepts/#data-files-visualizations). An output directory of these ```.qzv``` files will be created at the end of the Snakefile run. These files can be brought locally and [drag and dropped to here](https://view.qiime2.org). In the above QC steps, whenever a .qza file was worked on, you had the option to run this:
 ```
 # ../../qiime2/asv/ #In this directory
+
+# Activate a qiime2 environment (see instructions on QIIME2 website)
+conda activate qiime2-2019.4
+
 # Insert any of the .qza artifact files generated
 qiime demux summarize --i-data PROJECT-STEP.qza --o-visualization PROJECT-STEP.qzv
 ```
-
-#### _To do:_
-* Separate snakemake pipeline for visualization steps
-* How to select or skip steps? i.e. don't repeat dada2? dont do triming and fastqc step?
-* How to add an option? Alternate snakefiles in other directories for (a) vsearch tax assignment and (b) OTU clustering?
