@@ -157,7 +157,14 @@ To run the full pipeline make sure you enable the ```--use-conda``` flag. This i
 snakemake --use-conda
 ```
 
-[Read about executing snakemake on a cluster](https://snakemake.readthedocs.io/en/stable/executable.html)
+## 5. Run on HPC with SLURM
+
+[Read about executing snakemake on a cluster](https://snakemake.readthedocs.io/en/stable/executable.html) and another explanation on how to execute with a submit script can be found [here](https://hpc-carpentry.github.io/hpc-python/17-cluster/).    
+Review the submit scripts available in ```submitscripts```. Files in this directory include another config file called ```cluster.yaml```, and two scripts to submit your snakemake pipeline to the cluster with and without the dry run option.   
+First, open and modify the ```cluster.yaml``` to fit your machine. 
+
+```
+```
 
 ## 7. Output from pipeline
 
