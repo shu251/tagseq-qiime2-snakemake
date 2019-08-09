@@ -50,7 +50,7 @@ bash download-subset.sh
 cd ..
 ```
 
-### **If using your own fastq files** place in ```raw_data``` directory.
+### **If using your own fastq files** place them in their own ```raw_data``` directory (see step to update config.yaml to tell snakemake where these are located).
 
 ## 2. Create required files for input into Snakefile
 
@@ -161,12 +161,21 @@ snakemake --use-conda
 
 [Read about executing snakemake on a cluster](https://snakemake.readthedocs.io/en/stable/executable.html) and another explanation on how to execute with a submit script can be found [here](https://hpc-carpentry.github.io/hpc-python/17-cluster/).    
 Review the submit scripts available in ```submitscripts```. Files in this directory include another config file called ```cluster.yaml```, and two scripts to submit your snakemake pipeline to the cluster with and without the dry run option.   
-First, open and modify the ```cluster.yaml``` to fit your machine. 
+First, open and modify the ```cluster.yaml``` to fit your machine. Then test run using the provided submit scripts.
+```
+# Make sure you are still in the snake-tagseq conda environment
+bash submitscripts/submit-slurm-dry.sh
+```
+Outputs should all be green and will report how many jobs and rules snakemake plans to run. This will allow you to evaluate any error and syntax messages.  
+
+Once ready, use the submit-slurm.sh script to submit the jobs to slurm. Run with screen, tmux, or nohup.
+```
+bash submitscripts/submit-slurm.sh
+# This will print jobs submitted as it runs. Monitor these jobs using ```squeue```
 
 ```
-```
 
-## 7. Output from pipeline
+## 6. Output from pipeline
 
 * **ASV table:** ```[PROJ]-asv-table.tsv``` includes samples by columns and ASVs by row. Values represent number of sequences per ASV (row) in a given sample (column).  
 * **Assigned taxonomy:** ```tax_dir/taxonomy.tsv``` represents the full taxonomic name for each ASV. The same ASV identifer (string of letters and numbers under 'Feature ID') as the asv-table.  
@@ -176,14 +185,19 @@ To combine these table, you can run the R script from the ```../../qiime2/asv/``
 # Migrate to directory with .qza and .tsv outputs from snakemake pipeline
 cd ../../../qiime2/asv/
 
+# Ensure R is enabled
+# conda activate r_3.5.1 # to activate the R conda environment
+
 # Path to R script
 Rscript /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/make-asv-table.R
 ```
 
-* **CountTable-wtax** - ASV table with counts per sample and the taxonomic identities
+* **CountTable-wtax-DATE.txt** - ASV table with counts per sample and the taxonomic identities
 * **Output_stats.txt** - quick stats on results, including how many sequences per sample, and how many ASVs with only 1 or 2 sequences are in final results
 
-## 8. qiime2 visualization option
+Find an introduction to R for processing ASV or OTU tables [here](https://github.com/shu251/PreliminaryFigures_V4_tagseq).
+
+## 7. qiime2 visualization option
 
 QIIME2 offers away to visualize the data types (artifact files) using [an interative viewer](https://docs.qiime2.org/2019.4/concepts/#data-files-visualizations). An output directory of these ```.qzv``` files will be created at the end of the Snakefile run. These files can be brought locally and [drag and dropped to here](https://view.qiime2.org). In the above QC steps, whenever a .qza file was worked on, you had the option to run this:
 ```
@@ -195,3 +209,4 @@ conda activate qiime2-2019.4
 # Insert any of the .qza artifact files generated
 qiime demux summarize --i-data PROJECT-STEP.qza --o-visualization PROJECT-STEP.qzv
 ```
+_last updated 08-08-2019_
