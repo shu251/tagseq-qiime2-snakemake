@@ -213,3 +213,15 @@ conda activate qiime2-2019.4
 qiime demux summarize --i-data PROJECT-STEP.qza --o-visualization PROJECT-STEP.qzv
 ```
 _last updated 08-08-2019_
+
+
+​```flow
+st=>start: Start
+op=>operation: Your Operation
+cond=>condition: Yes or No?
+e=>end
+
+st->op->cond
+cond(yes)->e
+cond(no)->op
+​```
