@@ -15,6 +15,7 @@ SCRATCH = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
 
 # Use glob statement to find all samples in 'raw_data' directory
+## Wildcard '{num}' must be equivalent to 'R1' or '1', meaning the read pair designation.
 SAMPLE_LIST,NUMS = glob_wildcards(INPUTDIR + "/{sample}_{num}.fastq.gz")
 # Unique the output variables from glob_wildcards
 SAMPLE_SET = set(SAMPLE_LIST)

@@ -51,7 +51,9 @@ bash download-subset.sh
 cd ..
 ```
 
-### **If using your own fastq files** place them in their own ```raw_data``` directory (see step to update config.yaml to tell snakemake where these are located).
+### **If using your own fastq files**  
+* Place them in their own ```raw_data``` directory (see step to update config.yaml to tell snakemake where these are located).
+* Make sure they are labeled so the last numbers/letters in the file names designate the read pair. Input fastq files should be labeled either: Sample01_treatment1_R1.fastq.gz or Sample01_treatment1_1.fastq.gz
 
 ## 2. Create required files for input into Snakefile
 
@@ -76,10 +78,10 @@ The SRR fastq files I downloaded directly from SRA do not have actual sample nam
 Format your own txt file (using a text editor or a CSV file) exactly this way. Every line must be comma separated, with sample-id, followed by the path of fastq file, followed by either "forward" or "reverse". 
 ```
 sample-id,absolute-filepath,direction
-sample1,$PWD/raw_seqs_dir/Test01_full_L001_R1_001.fastq.gz,forward
-sample1,$PWD/raw_seqs_dir/Test01_full_L001_R2_001.fastq.gz,reverse
-sample2,$PWD/raw_seqs_dir/Test02_full_L001_R1_001.fastq.gz,forward
-sample2,$PWD/raw_seqs_dir/Test02_full_L001_R2_001.fastq.gz,reverse
+sample1,$PWD/raw_seqs_dir/Test01_full_L001_R1.fastq.gz,forward
+sample1,$PWD/raw_seqs_dir/Test01_full_L001_R2.fastq.gz,reverse
+sample2,$PWD/raw_seqs_dir/Test02_full_L001_R1.fastq.gz,forward
+sample2,$PWD/raw_seqs_dir/Test02_full_L001_R2.fastq.gz,reverse
 ```
 * Replace $PWD with your path
 * The fastq files can be gziped. 
