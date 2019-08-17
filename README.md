@@ -3,7 +3,19 @@ _July 2019_
 _Sarah Hu_
 
 Run [QIIME2](https://www.nature.com/articles/s41587-019-0209-9) using [snakemake](https://academic.oup.com/bioinformatics/article/28/19/2520/290322). Requires input of raw .fastq reads. Below describes steps to set up environment and run a test dataset.
-This Snakemake pipeline can be easily scaled up to larger datasets and includes scripts to submit jobs to slurm.
+This Snakemake pipeline can be easily scaled up to larger datasets and includes scripts to submit Snakemake jobs to slurm.  
+
+## _Pipeline_
+1. Generate manifest.txt file from a directory containing all raw .fastq files (R)
+2. Read in raw .fastq files and perform *fastqc*, *Trimmomatic*, and repeat *fastqc* on newly trimmed reads (snakemake)
+3. Modify manifest.txt file so input files are the trimmed .fastq reads
+4. Import all trimmed reads as QIIME2 artifact
+5. Remove primers with cutadapt
+6. Run DADA2, which performs additional quality trimming, filtering, and denoising steps. Also removes chimeric sequences. Finally, determines *Amplicon Sequence Variants*
+7. Assigns taxonomy using QIIME2 feature classifer
+8. Generates ASV count and taxonomy tables
+9. Compiles ASV count + taxonomy table (R)
+
 
 ## Before starting
 * If you're new to snakemake and/or qiime2, run the below using the provided test data. If you want to learn more about qiime2, [see tutorials on their website](https://docs.qiime2.org/2019.7/). And if you're new to snakemake, [learn more here](https://snakemake.readthedocs.io/en/stable/) or follow a recommended [tutorial](https://github.com/ctb/2019-snakemake-ucdavis).
@@ -212,16 +224,4 @@ conda activate qiime2-2019.4
 # Insert any of the .qza artifact files generated
 qiime demux summarize --i-data PROJECT-STEP.qza --o-visualization PROJECT-STEP.qzv
 ```
-_last updated 08-08-2019_
-
-
-​```flow
-st=>start: Start
-op=>operation: Your Operation
-cond=>condition: Yes or No?
-e=>end
-
-st->op->cond
-cond(yes)->e
-cond(no)->op
-​```
+_last updated 08-17-2019_
