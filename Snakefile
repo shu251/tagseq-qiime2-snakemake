@@ -1,4 +1,5 @@
 # Snakemake file - input raw fastq reads to generate Amplicon Sequence Variants
+## Updated Sept 16 to include clustering of Operational Taxonomic Units
 configfile: "config.yaml"
 
 import io 
@@ -56,6 +57,7 @@ rule all:
     table = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.qza",
     rep = SCRATCH + "/qiime2/asv/" + PROJ + "-rep-seqs.qza",
     stats = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qza",
+    stats_viz = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qzv",
     sklearn = SCRATCH + "/qiime2/asv/" + PROJ +	"-tax_sklearn.qza",
     biom = SCRATCH + "/qiime2/asv/table/feature-table.biom",
     table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
@@ -184,6 +186,20 @@ rule dada2:
         --o-table {output.table} \
         --o-representative-sequences {output.rep} \
         --o-denoising-stats {output.stats}"
+
+rule dada2_stats:
+  input:
+    stats = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qza"
+  output:
+    stats_viz = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qzv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_dada2-stats_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+   "qiime metadata tabulate \
+       --m-input-file {input.stats} \
+       --o-visualization {output.stats_viz}"
 
 rule assign_tax:
   input:
