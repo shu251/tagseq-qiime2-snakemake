@@ -1,5 +1,5 @@
 # Pipeline to run qiime2 with snakemake
-_July 2019_
+_Sept 2019_
 _Sarah Hu_
 
 Run [QIIME2](https://www.nature.com/articles/s41587-019-0209-9) using [snakemake](https://academic.oup.com/bioinformatics/article/28/19/2520/290322). Requires input of raw .fastq reads. Below describes steps to set up environment and run a test dataset.
@@ -11,11 +11,22 @@ This Snakemake pipeline can be easily scaled up to larger datasets and includes 
 3. Modify manifest.txt file so input files are the trimmed .fastq reads
 4. Import all trimmed reads as QIIME2 artifact
 5. Remove primers with cutadapt
+
+_Amplicon Sequence Variants_
 6. Run DADA2, which performs additional quality trimming, filtering, and denoising steps. Also removes chimeric sequences. Finally, determines *Amplicon Sequence Variants*
 7. Assigns taxonomy using QIIME2 feature classifer
 8. Generates ASV count and taxonomy tables
 9. Compiles ASV count + taxonomy table (R)
 
+_Operational Taxonomic Units_
+10. Merged paired end reads and filter reads by qscore
+11. Dereplicate sequences
+12. Cluster into OTUs (open reference & closed reference currently written)
+13. Determine chimeras using uchime with the reference database
+14. Remove chimeras from representative sequences and cluster table
+15. Assign taxonomy using QIIME2 feature classifier
+16. Generate OTU count and taxonomy tables
+17. Compile OTU count + taxonomy table
 
 ## Before starting
 * If you're new to snakemake and/or qiime2, run the below using the provided test data. If you want to learn more about qiime2, [see tutorials on their website](https://docs.qiime2.org/2019.7/). And if you're new to snakemake, [learn more here](https://snakemake.readthedocs.io/en/stable/) or follow a recommended [tutorial](https://github.com/ctb/2019-snakemake-ucdavis).
@@ -151,6 +162,27 @@ chimera: pooled
 #Number of reads to consider in training set for error model
 --p-n-reads-learn # defaul is 1 million
 ```
+
+For clustering OTUs and the steps preceeding OTU clustering, set parameters in the config.yaml file:
+```
+# Merge paired end reads
+minoverlap: 10
+maxdiff: 4
+minlength: 270
+
+# Quality filtering of merged reads
+minphred: 4
+qualwindow: 3 
+
+# Open reference OTU clustering
+perc_id: 0.90
+otu-thread: 1
+
+# Chimera checking
+chimera-thread: 1
+```
+If you're unsure about parameters, consult the QIIME2 reference manual.
+
 
 Ahead of running this pipeline, prepare a database so the reference sequences can be assigned a taxonomy.
 You can use [this pipeline](https://github.com/shu251/db-build-microeuks) to do this.

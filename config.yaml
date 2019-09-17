@@ -1,6 +1,6 @@
 proj_name: Diel_18S
 raw_data: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_data
-scratch:  /vortexfs1/scratch/sarahhu
+scratch:  /vortexfs1/scratch/sarahhu/tagseq-output
 outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake
 manifest: manifest.txt
 sample_names: SampleList.txt
@@ -8,12 +8,16 @@ manifest-trimmed: manifest-trimmed.txt
 
 
 # QIIME2-specific flags
+
 ## Primer removal
 primerF: CCAGCASCYGCGGTAATTCC
 primerR: ACTTTCGTTCTTGATYRA
 primer_err: 0.4
 primer_overlap: 3
 
+## Database
+database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.12.0.qza
+database_classified: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.12.0-classifier.qza
 
 ## DADA2 - ASV flags
 truncation_err: 2
@@ -23,6 +27,20 @@ quality_err: 2
 training: 1000 #should be set higher for a non-test dataset
 chimera: pooled
 
+## OTU clustering
 
-## Database
-database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.11.1-classifier.qza
+# Merge paired end reads
+minoverlap: 10
+maxdiff: 4
+minlength: 270
+
+# Quality filtering of merged reads
+minphred: 4
+qualwindow: 3 
+
+# Open reference OTU clustering
+perc_id: 0.90
+otu-thread: 1
+
+# Chimera checking
+chimera-thread: 1
