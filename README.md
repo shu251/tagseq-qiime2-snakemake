@@ -13,12 +13,14 @@ This Snakemake pipeline can be easily scaled up to larger datasets and includes 
 5. Remove primers with cutadapt
 
 _Amplicon Sequence Variants_  
+
 6. Run DADA2, which performs additional quality trimming, filtering, and denoising steps. Also removes chimeric sequences. Finally, determines *Amplicon Sequence Variants*
 7. Assigns taxonomy using QIIME2 feature classifer
 8. Generates ASV count and taxonomy tables
 9. Compiles ASV count + taxonomy table (R)
 
 _Operational Taxonomic Units_   
+
 10. Merged paired end reads and filter reads by qscore
 11. Dereplicate sequences
 12. Cluster into OTUs (open reference & closed reference currently written)
