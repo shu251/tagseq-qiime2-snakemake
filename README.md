@@ -12,13 +12,13 @@ This Snakemake pipeline can be easily scaled up to larger datasets and includes 
 4. Import all trimmed reads as QIIME2 artifact
 5. Remove primers with cutadapt
 
-_Amplicon Sequence Variants_
+_Amplicon Sequence Variants_  
 6. Run DADA2, which performs additional quality trimming, filtering, and denoising steps. Also removes chimeric sequences. Finally, determines *Amplicon Sequence Variants*
 7. Assigns taxonomy using QIIME2 feature classifer
 8. Generates ASV count and taxonomy tables
 9. Compiles ASV count + taxonomy table (R)
 
-_Operational Taxonomic Units_
+_Operational Taxonomic Units_   
 10. Merged paired end reads and filter reads by qscore
 11. Dereplicate sequences
 12. Cluster into OTUs (open reference & closed reference currently written)
@@ -27,7 +27,7 @@ _Operational Taxonomic Units_
 15. Assign taxonomy using QIIME2 feature classifier
 16. Generate OTU count and taxonomy tables
 17. Compile OTU count + taxonomy table
-
+***
 ## Before starting
 * If you're new to snakemake and/or qiime2, run the below using the provided test data. If you want to learn more about qiime2, [see tutorials on their website](https://docs.qiime2.org/2019.7/). And if you're new to snakemake, [learn more here](https://snakemake.readthedocs.io/en/stable/) or follow a recommended [tutorial](https://github.com/ctb/2019-snakemake-ucdavis).
 * Before running qiime2, build your preferred database for assigning taxonomy, [directions here for a microeuk db](https://github.com/shu251/db-build-microeuks)
