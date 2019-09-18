@@ -414,7 +414,6 @@ rule chimera_rm_seq:
     "qiime feature-table filter-seqs \
         --i-data {input.q2_cluster_seqs} \
         --i-table {input.q2_table_nc} \
-        --m-metadata-file {input.q2_nonchimeras} \
         --o-filtered-data {output.q2_seqs_nc}"
 
 rule assign_tax_otu:
