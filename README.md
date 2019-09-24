@@ -271,5 +271,10 @@ qiime demux summarize --i-data PROJECT-STEP.qza --o-visualization PROJECT-STEP.q
 * R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
 ***
 
-_last updated 08-17-2019_
+
+#### To do:
+* Update so R script is integrated into snakemake and creates tables with taxonomy for both ASV and OTU pipelines
+* Add in final step to generate a fasta file with fasta headers which correspond to the reference sequences
+
+_last updated 09-24-2019_
 
