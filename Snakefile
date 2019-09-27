@@ -36,7 +36,7 @@ MANIFEST_FINAL = config["manifest-trimmed"]
 # Database information to assign taxonomy
 DB = config["database"]
 DB_classifier = config["database_classified"]
-
+DB_tax = config["database_tax"]
 
 #----DEFINE RULES----#
 
@@ -73,7 +73,6 @@ rule all:
     q2_dedup_seq = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_seqs.qza",
     q2_cluster_table = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-table.qza",
     q2_cluster_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-seqs.qza",
-    q2_newref_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-new-ref-seqs.qza",
     q2_chimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-chimeras.qza",
     q2_nonchimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-nonchimeras.qza",
     q2_chimeras_stats = SCRATCH + "/qiime2/otu/" + PROJ + "-chimeras-STATS.qza",
@@ -82,7 +81,8 @@ rule all:
     sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza",
     table_biom_otu = SCRATCH + "/qiime2/otu/table/feature-table.biom",
     table_tsv_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-table.tsv",
-    table_tax_otu = SCRATCH + "/qiime2/otu/tax_dir/taxonomy.tsv"
+    table_tax_otu = SCRATCH + "/qiime2/otu/tax_assigned/taxonomy.tsv",
+    table_tax_key = SCRATCH + "/qiime2/otu/tax_key/taxonomy.tsv"
 
 rule fastqc:
   input:    
@@ -336,29 +336,25 @@ rule dedup:
         --o-dereplicated-table {output.q2_dedup} \
 	--o-dereplicated-sequences {output.q2_dedup_seq}"
 
-rule open_ref:
+rule denovo:
   input:
     q2_dedup = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_table.qza",
     q2_dedup_seq = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_seqs.qza",
-    ref_db = DB
   output:
     q2_cluster_table = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-table.qza",
     q2_cluster_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-seqs.qza",
-    q2_newref_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-new-ref-seqs.qza"
   log:
-    SCRATCH + "/qiime2/logs/" + PROJ + "_openref_q2.log"
+    SCRATCH + "/qiime2/logs/" + PROJ + "_denovocluster_q2.log"
   conda:
     "envs/qiime2-2019.4.yaml"
   shell:
-    "qiime vsearch cluster-features-open-reference \
+    "qiime vsearch cluster-features-de-novo \
         --i-table {input.q2_dedup} \
         --i-sequences {input.q2_dedup_seq} \
-        --i-reference-sequences {input.ref_db} \
-        --p-perc-identity {config[perc_id]} \
+        --p-perc-identity {config[denovo_perc_id]} \
         --o-clustered-table {output.q2_cluster_table} \
         --o-clustered-sequences {output.q2_cluster_seqs}  \
-        --o-new-reference-sequences {output.q2_newref_seqs} \
-        --p-threads {config[otu-thread]}"
+        --p-threads {config[denovo_otu-thread]}"
 
 rule chimera_find:
   input:
@@ -462,12 +458,26 @@ rule gen_tax_otu:
   input:
     sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza"
   output:
-    table_tax_otu = SCRATCH + "/qiime2/otu/tax_dir/taxonomy.tsv"
+    table_tax_otu = SCRATCH + "/qiime2/otu/tax_assigned/taxonomy.tsv"
   log:
     SCRATCH + "/qiime2/logs/" + PROJ + "_otuexportTAXTSV_q2.log"
   conda:
     "envs/qiime2-2019.4.yaml"
   params:
-    directory(SCRATCH + "/qiime2/otu/tax_dir")
+    directory(SCRATCH + "/qiime2/otu/tax_assigned")
   shell:
     "qiime tools export --input-path {input.sklearn_otu} --output-path {params}"
+
+rule gen_tax_key:
+  input:
+    db_tax = DB_tax
+  output:
+    table_tax_key = SCRATCH + "/qiime2/otu/tax_key/taxonomy.tsv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_otuexportTSV_taxkey_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  params:
+    directory(SCRATCH + "/qiime2/otu/tax_key")
+  shell:
+    "qiime tools export --input-path {input.db_tax} --output-path {params}"
