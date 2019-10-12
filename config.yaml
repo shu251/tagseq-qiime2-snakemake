@@ -41,7 +41,7 @@ qualwindow: 3
 
 # De novo OTU clustering
 denovo_perc_id: 0.97
-denovo_otu-thread:
+denovo_otu-thread: 1
 
 # Open reference OTU clustering
 openref_perc_id: 0.90
