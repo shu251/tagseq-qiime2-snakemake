@@ -196,14 +196,20 @@ database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.11.1-classifier.qza
 
 ## 4. Test ```snakemake``` dry run & execute full pipeline
 
+Use *-s* to select between the Snakemake pipelines
 ```
-snakemake -np
+snakemake -np -s Snakefile-asv
+snakemake -np -s Snakefile-otu
 # output should be all green and display no errors
 ``` 
 
 To run the full pipeline make sure you enable the ```--use-conda``` flag. This is because snakemake uses the conda environments stored in ```envs/``` to execute rules.
 ```
-snakemake --use-conda
+# For ASVs
+snakemake --use-conda -s Snakefile-asv
+
+# For OTUs
+snakemake --use-conda -s Snakefile-otu
 ```
 
 ## 5. Run on HPC with SLURM
@@ -213,16 +219,24 @@ Review the submit scripts available in ```submitscripts```. Files in this direct
 First, open and modify the ```cluster.yaml``` to fit your machine. Then test run using the provided submit scripts.
 ```
 # Make sure you are still in the snake-tagseq conda environment
-bash submitscripts/submit-slurm-dry.sh
+
+## For ASVs:
+bash submitscripts/dry-submit-slurm-ASV.sh 
+
+## For OTUs:
+bash submitscripts/dry-submit-slurm-OTU.sh
 ```
 Outputs should all be green and will report how many jobs and rules snakemake plans to run. This will allow you to evaluate any error and syntax messages.  
 
 Once ready, use the submit-slurm.sh script to submit the jobs to slurm. Run with screen, tmux, or nohup.
 ```
-bash submitscripts/submit-slurm.sh
-# This will print jobs submitted as it runs. Monitor these jobs using ```squeue```
+# Full run for ASVs:
+bash submitscripts/submit-slurm-ASV.sh
 
+# Full run for OTUs:
+bash submitscripts/submit-slurm-OTU.sh
 ```
+Run the above in *tmux* or *screen*, as it will print out the jobs it submits to SLURM. You will be able to monitor the progress this way.
 
 ## 6. Output from pipeline
 
