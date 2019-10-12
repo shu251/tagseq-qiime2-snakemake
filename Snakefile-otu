@@ -1,0 +1,377 @@
+# Snakemake file - input raw fastq reads to generate Amplicon Sequence Variants
+## Updated Sept 16 to include clustering of Operational Taxonomic Units
+configfile: "config.yaml"
+
+import io 
+import os
+import pandas as pd
+import pathlib
+from snakemake.exceptions import print_exception, WorkflowError
+
+#----SET VARIABLES----#
+
+PROJ = config["proj_name"]
+INPUTDIR = config["raw_data"]
+SCRATCH = config["scratch"]
+OUTPUTDIR = config["outputDIR"]
+
+# Use glob statement to find all samples in 'raw_data' directory
+## Wildcard '{num}' must be equivalent to 'R1' or '1', meaning the read pair designation.
+SAMPLE_LIST,NUMS = glob_wildcards(INPUTDIR + "/{sample}_{num}.fastq.gz")
+# Unique the output variables from glob_wildcards
+SAMPLE_SET = set(SAMPLE_LIST)
+SET_NUMS = set(NUMS)
+
+# Create final manifest file for qiime2
+MANIFEST = pd.read_csv(config["manifest"]) #Import manifest
+MANIFEST['filename'] = MANIFEST['absolute-filepath'].str.split('/').str[-1] #add new column with only file name
+MANIFEST.rename(columns = {'absolute-filepath':'rawreads-filepath'}, inplace = True)
+PATH_TRIMMED = "trimmed" # name of directory with trimmed reads
+NEWPATH = os.path.join(SCRATCH, PATH_TRIMMED)
+MANIFEST['filename'] = MANIFEST['filename'].str.replace(".fastq.gz", "_trim.fastq.gz")
+MANIFEST['absolute-filepath'] = NEWPATH+ "/" + MANIFEST['filename']    
+MANIFEST[['sample-id','absolute-filepath','direction']].set_index('sample-id').to_csv('manifest-trimmed.txt')
+MANIFEST_FINAL = config["manifest-trimmed"]
+
+# Database information to assign taxonomy
+DB = config["database"]
+DB_classifier = config["database_classified"]
+DB_tax = config["database_tax"]
+
+#----DEFINE RULES----#
+
+rule all:
+  input:
+    # fastqc output before trimming
+    raw_html = expand("{scratch}/fastqc/{sample}_{num}_fastqc.html", scratch = SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    raw_zip = expand("{scratch}/fastqc/{sample}_{num}_fastqc.zip", scratch = SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    raw_multi_html = SCRATCH + "/fastqc/raw_multiqc.html",
+    raw_multi_stats = SCRATCH + "/fastqc/raw_multiqc_general_stats.txt",
+    # Trimmed data output
+    trimmedData = expand("{scratch}/trimmed/{sample}_{num}_trim.fastq.gz", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS), 
+    trim_html = expand("{scratch}/fastqc/{sample}_{num}_trimmed_fastqc.html", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    trim_zip = expand("{scratch}/fastqc/{sample}_{num}_trimmed_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    trim_multi_html = SCRATCH + "/fastqc/trimmed_multiqc.html", #next change to include proj name
+    trim_multi_stats = SCRATCH + "/fastqc/trimmed_multiqc_general_stats.txt",
+    # QIIME2 outputs
+    q2_import = SCRATCH + "/qiime2/" + PROJ + "-PE-demux.qza",
+    q2_primerRM = SCRATCH + "/qiime2/" + PROJ + "-PE-demux-noprimer.qza",
+    # OTU output
+    q2_joined = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined.qza",
+    q2_filtered = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered.qza",
+    q2_filterstats = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-STATS.qza",
+    q2_dedup = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_table.qza",
+    q2_dedup_seq = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_seqs.qza",
+    q2_cluster_table = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-table.qza",
+    q2_cluster_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-seqs.qza",
+    q2_chimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-chimeras.qza",
+    q2_nonchimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-nonchimeras.qza",
+    q2_chimeras_stats = SCRATCH + "/qiime2/otu/" + PROJ + "-chimeras-STATS.qza",
+    q2_table_nc = SCRATCH + "/qiime2/otu/" + PROJ + "-table-nc.qza",
+    q2_seqs_nc = SCRATCH + "/qiime2/otu/" + PROJ + "-seqs-nc.qza",
+    sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza",
+    table_biom_otu = SCRATCH + "/qiime2/otu/table/feature-table.biom",
+    table_tsv_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-table.tsv",
+    table_tax_otu = SCRATCH + "/qiime2/otu/tax_assigned/taxonomy.tsv",
+    table_tax_key = SCRATCH + "/qiime2/otu/tax_key/taxonomy.tsv"
+
+rule fastqc:
+  input:    
+    INPUTDIR + "/{sample}_{num}.fastq.gz"
+  output:
+    html = SCRATCH + "/fastqc/{sample}_{num}_fastqc.html",
+    zip = SCRATCH + "/fastqc/{sample}_{num}_fastqc.zip"
+  params: ""
+  log:
+    SCRATCH + "/logs/fastqc/{sample}_{num}.log"
+  wrapper:
+    "0.35.2/bio/fastqc"
+
+rule trimmomatic_pe:
+  input:
+    r1 = INPUTDIR + "/{sample}_1.fastq.gz",
+    r2 = INPUTDIR + "/{sample}_2.fastq.gz"
+  output:
+    r1 = SCRATCH + "/trimmed/{sample}_1_trim.fastq.gz",
+    r2 = SCRATCH + "/trimmed/{sample}_2_trim.fastq.gz",
+    # reads where trimming entirely removed the mate
+    r1_unpaired = SCRATCH + "/trimmed/{sample}_1.unpaired.fastq.gz",
+    r2_unpaired = SCRATCH + "/trimmed/{sample}_2.unpaired.fastq.gz"
+  log:
+    SCRATCH + "/trimmed/logs/trimmomatic/{sample}.log"
+  params:
+    trimmer = ["LEADING:2", "TRAILING:2", "SLIDINGWINDOW:4:2", "MINLEN:25"],
+    extra = ""
+  wrapper:
+    "0.35.2/bio/trimmomatic/pe"
+
+rule fastqc_trim:
+  input:
+    SCRATCH + "/trimmed/{sample}_{num}_trim.fastq.gz"
+  output:
+    html = SCRATCH + "/fastqc/{sample}_{num}_trimmed_fastqc.html",
+    zip = SCRATCH + "/fastqc/{sample}_{num}_trimmed_fastqc.zip"
+  params: ""
+  log:
+    SCRATCH + "/logs/fastqc/{sample}_{num}_trimmed.log"
+  wrapper:
+    "0.35.2/bio/fastqc"
+
+rule multiqc:
+  input:
+    raw_qc = expand("{scratch}/fastqc/{sample}_{num}_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS),
+    trim_qc = expand("{scratch}/fastqc/{sample}_{num}_trimmed_fastqc.zip", scratch= SCRATCH, sample=SAMPLE_SET, num=SET_NUMS)
+  output:
+    raw_multi_html = SCRATCH + "/fastqc/raw_multiqc.html", 
+    raw_multi_stats = SCRATCH + "/fastqc/raw_multiqc_general_stats.txt",
+    trim_multi_html = SCRATCH + "/fastqc/trimmed_multiqc.html", 
+    trim_multi_stats = SCRATCH + "/fastqc/trimmed_multiqc_general_stats.txt"
+  conda:
+   "envs/multiqc-env.yaml"
+  shell: 
+    """
+    multiqc -n multiqc.html {input.raw_qc} #run multiqc
+    mv multiqc.html {output.raw_multi_html} #rename html
+    mv multiqc_data/multiqc_general_stats.txt {output.raw_multi_stats} #move and rename stats
+    rm -rf multiqc_data #clean-up
+    #repeat for trimmed data
+    multiqc -n multiqc.html {input.trim_qc} #run multiqc
+    mv multiqc.html {output.trim_multi_html} #rename html
+    mv multiqc_data/multiqc_general_stats.txt {output.trim_multi_stats} #move and rename stats
+    rm -rf multiqc_data	#clean-up
+    """ 
+
+rule import_qiime:
+  input:
+    MANIFEST_FINAL
+  output:
+    q2_import = SCRATCH + "/qiime2/" + PROJ + "-PE-demux.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+   "qiime tools import \
+       --type 'SampleData[PairedEndSequencesWithQuality]' \
+       --input-path {input} \
+       --output-path {output.q2_import} \
+       --input-format PairedEndFastqManifestPhred33"
+
+rule rm_primers:
+  input:
+    q2_import = SCRATCH + "/qiime2/" + PROJ + "-PE-demux.qza"
+  output:
+    q2_primerRM = SCRATCH + "/qiime2/" + PROJ + "-PE-demux-noprimer.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_primer_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime cutadapt trim-paired \
+       --i-demultiplexed-sequences {input.q2_import} \
+       --p-front-f {config[primerF]} \
+       --p-front-r {config[primerR]} \
+       --p-error-rate {config[primer_err]} \
+       --p-overlap {config[primer_overlap]} \
+       --o-trimmed-sequences {output.q2_primerRM}"
+
+#####
+#OTU#
+#####
+
+rule merge_pe:
+  input:
+    q2_primerRM = SCRATCH + "/qiime2/" + PROJ + "-PE-demux-noprimer.qza"
+  output:
+    q2_joined = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_mergePE_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime vsearch join-pairs \
+        --i-demultiplexed-seqs {input.q2_primerRM} \
+	--o-joined-sequences {output.q2_joined} \
+        --p-minovlen {config[minoverlap]} \
+        --p-maxdiffs {config[maxdiff]} \
+        --p-minmergelen {config[minlength]}"
+
+rule filter_qscore:
+  input:
+    q2_joined = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined.qza"
+  output:
+    q2_filtered = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered.qza",
+    q2_filterstats = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-STATS.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_filterPE_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime quality-filter q-score-joined \
+        --i-demux {input.q2_joined} \
+        --o-filtered-sequences {output.q2_filtered} \
+        --p-min-quality {config[minphred]} \
+        --p-quality-window {config[qualwindow]} \
+        --o-filter-stats {output.q2_filterstats}"
+
+rule dedup:
+  input:
+    q2_filtered = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered.qza"
+  output:
+    q2_dedup = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_table.qza",
+    q2_dedup_seq = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_seqs.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_dedupPE_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime vsearch dereplicate-sequences \
+        --i-sequences {input.q2_filtered} \
+        --o-dereplicated-table {output.q2_dedup} \
+	--o-dereplicated-sequences {output.q2_dedup_seq}"
+
+rule denovo:
+  input:
+    q2_dedup = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_table.qza",
+    q2_dedup_seq = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_seqs.qza",
+  output:
+    q2_cluster_table = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-table.qza",
+    q2_cluster_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-seqs.qza",
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_denovocluster_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime vsearch cluster-features-de-novo \
+        --i-table {input.q2_dedup} \
+        --i-sequences {input.q2_dedup_seq} \
+        --p-perc-identity {config[denovo_perc_id]} \
+        --o-clustered-table {output.q2_cluster_table} \
+        --o-clustered-sequences {output.q2_cluster_seqs}  \
+        --p-threads {config[denovo_otu-thread]}"
+
+rule chimera_find:
+  input:
+    q2_cluster_table = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-table.qza",
+    q2_cluster_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-seqs.qza",
+    ref_db = DB
+  output:
+    q2_chimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-chimeras.qza",
+    q2_nonchimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-nonchimeras.qza",
+    q2_chimeras_stats = SCRATCH + "/qiime2/otu/" + PROJ + "-chimeras-STATS.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_chimeracheck_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime vsearch uchime-ref \
+	--i-table {input.q2_cluster_table} \
+	--i-sequences  {input.q2_cluster_seqs} \
+	--i-reference-sequences {input.ref_db} \
+	--p-threads {config[chimera-thread]} \
+	--o-chimeras {output.q2_chimeras} \
+        --o-nonchimeras {output.q2_nonchimeras} \
+        --o-stats {output.q2_chimeras_stats}"
+
+rule chimera_rm_table:
+  input:
+    q2_cluster_table = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-table.qza",
+    q2_nonchimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-nonchimeras.qza"
+  output:
+    q2_table_nc = SCRATCH + "/qiime2/otu/" + PROJ + "-table-nc.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_chimerarm_table_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime feature-table filter-features \
+	--i-table {input.q2_cluster_table} \
+        --m-metadata-file {input.q2_nonchimeras} \
+        --o-filtered-table {output.q2_table_nc}"
+
+rule chimera_rm_seq:
+  input:
+    q2_cluster_seqs = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-seqs.qza",
+    q2_nonchimeras = SCRATCH + "/qiime2/otu/" + PROJ + "-nonchimeras.qza",
+    q2_table_nc = SCRATCH + "/qiime2/otu/" + PROJ + "-table-nc.qza"
+  output:
+    q2_seqs_nc = SCRATCH + "/qiime2/otu/" + PROJ + "-seqs-nc.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_chimerarm_seqs_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime feature-table filter-seqs \
+        --i-data {input.q2_cluster_seqs} \
+        --i-table {input.q2_table_nc} \
+        --o-filtered-data {output.q2_seqs_nc}"
+
+rule assign_tax_otu:
+  input:
+    q2_seqs_nc = SCRATCH + "/qiime2/otu/" + PROJ + "-seqs-nc.qza",
+    db_classified = DB_classifier
+  output:
+    sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_otu_sklearn_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "qiime feature-classifier classify-sklearn \
+        --i-classifier {input.db_classified} \
+        --i-reads {input.q2_seqs_nc} \
+        --o-classification {output.sklearn_otu}"
+
+rule gen_table_otu:
+  input:
+    q2_table_nc = SCRATCH + "/qiime2/otu/" + PROJ + "-table-nc.qza"
+  output:
+    table_biom_otu = SCRATCH + "/qiime2/otu/table/feature-table.biom"    
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_otutable_BIOM.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  params:
+    directory(SCRATCH + "/qiime2/otu/table")
+  shell:
+    "qiime tools export --input-path {input.q2_table_nc} --output-path {params}"
+
+rule convert_otu:
+  input:
+    table_biom_otu = SCRATCH + "/qiime2/otu/table/feature-table.biom"
+  output:
+    table_tsv_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-table.tsv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_otuexportTSV_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    "biom convert -i {input} -o {output} --to-tsv"
+
+rule gen_tax_otu:
+  input:
+    sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza"
+  output:
+    table_tax_otu = SCRATCH + "/qiime2/otu/tax_assigned/taxonomy.tsv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_otuexportTAXTSV_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  params:
+    directory(SCRATCH + "/qiime2/otu/tax_assigned")
+  shell:
+    "qiime tools export --input-path {input.sklearn_otu} --output-path {params}"
+
+rule gen_tax_key:
+  input:
+    db_tax = DB_tax
+  output:
+    table_tax_key = SCRATCH + "/qiime2/otu/tax_key/taxonomy.tsv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_otuexportTSV_taxkey_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  params:
+    directory(SCRATCH + "/qiime2/otu/tax_key")
+  shell:
+    "qiime tools export --input-path {input.db_tax} --output-path {params}"
