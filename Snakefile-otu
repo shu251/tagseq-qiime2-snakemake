@@ -73,7 +73,7 @@ rule all:
     table_biom_otu = SCRATCH + "/qiime2/otu/table/feature-table.biom",
     table_tsv_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-table.tsv",
     table_tax_otu = SCRATCH + "/qiime2/otu/tax_assigned/taxonomy.tsv",
-    table_tax_key = SCRATCH + "/qiime2/otu/tax_key/taxonomy.tsv"
+    table_tax_key = SCRATCH + "/qiime2/otu/tax_key/dna-sequences.fasta"
 
 rule fastqc:
   input:    
