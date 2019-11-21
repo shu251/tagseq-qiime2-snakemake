@@ -6,6 +6,15 @@ manifest: manifest.txt
 sample_names: SampleList.txt
 manifest-trimmed: manifest-trimmed.txt
 
+# Fastq file suffix, following the read pair designation
+suffix: .fastq.gz
+#suffix: _001.fastq.gz
+
+# Read pair designations
+r1_suf: 1
+r2_suf: 2
+#r1_suf: R1
+#r2_suf: R2
 
 # QIIME2-specific flags
 

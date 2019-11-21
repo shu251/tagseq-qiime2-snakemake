@@ -1,5 +1,5 @@
-# Snakemake file - input raw fastq reads to generate Amplicon Sequence Variants
-## Updated Sept 16 to include clustering of Operational Taxonomic Units
+# Snakemake file - input raw fastq reads to generate OTUs
+## Last updated 11-20-2019 SHu
 configfile: "config.yaml"
 
 import io 
@@ -15,12 +15,23 @@ INPUTDIR = config["raw_data"]
 SCRATCH = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
 
+SUF = config["suffix"]
+R1_SUF = str(config["r1_suf"])
+R2_SUF = str(config["r2_suf"])
+
 # Use glob statement to find all samples in 'raw_data' directory
 ## Wildcard '{num}' must be equivalent to 'R1' or '1', meaning the read pair designation.
-SAMPLE_LIST,NUMS = glob_wildcards(INPUTDIR + "/{sample}_{num}.fastq.gz")
+SAMPLE_LIST,NUMS = glob_wildcards(INPUTDIR + "/{sample}_{num}" + SUF)
 # Unique the output variables from glob_wildcards
 SAMPLE_SET = set(SAMPLE_LIST)
 SET_NUMS = set(NUMS)
+
+# Uncomment to diagnose if snakemake is reading in wildcard variables properly
+print(SAMPLE_SET)
+print(SET_NUMS)
+
+print(SUF)
+print(R1_SUF)
 
 # Create final manifest file for qiime2
 MANIFEST = pd.read_csv(config["manifest"]) #Import manifest
@@ -28,7 +39,7 @@ MANIFEST['filename'] = MANIFEST['absolute-filepath'].str.split('/').str[-1] #add
 MANIFEST.rename(columns = {'absolute-filepath':'rawreads-filepath'}, inplace = True)
 PATH_TRIMMED = "trimmed" # name of directory with trimmed reads
 NEWPATH = os.path.join(SCRATCH, PATH_TRIMMED)
-MANIFEST['filename'] = MANIFEST['filename'].str.replace(".fastq.gz", "_trim.fastq.gz")
+MANIFEST['filename'] = MANIFEST['filename'].str.replace(SUF, "_trim.fastq.gz")
 MANIFEST['absolute-filepath'] = NEWPATH+ "/" + MANIFEST['filename']    
 MANIFEST[['sample-id','absolute-filepath','direction']].set_index('sample-id').to_csv('manifest-trimmed.txt')
 MANIFEST_FINAL = config["manifest-trimmed"]
@@ -72,12 +83,11 @@ rule all:
     sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza",
     table_biom_otu = SCRATCH + "/qiime2/otu/table/feature-table.biom",
     table_tsv_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-table.tsv",
-    table_tax_otu = SCRATCH + "/qiime2/otu/tax_assigned/taxonomy.tsv",
-    table_tax_key = SCRATCH + "/qiime2/otu/tax_key/dna-sequences.fasta"
+    table_tax_otu = SCRATCH + "/qiime2/otu/tax_assigned/taxonomy.tsv"
 
 rule fastqc:
   input:    
-    INPUTDIR + "/{sample}_{num}.fastq.gz"
+    INPUTDIR + "/{sample}_{num}" + SUF
   output:
     html = SCRATCH + "/fastqc/{sample}_{num}_fastqc.html",
     zip = SCRATCH + "/fastqc/{sample}_{num}_fastqc.zip"
@@ -89,11 +99,11 @@ rule fastqc:
 
 rule trimmomatic_pe:
   input:
-    r1 = INPUTDIR + "/{sample}_1.fastq.gz",
-    r2 = INPUTDIR + "/{sample}_2.fastq.gz"
+    r1 = INPUTDIR + "/{sample}_" + R1_SUF + SUF,
+    r2 = INPUTDIR + "/{sample}_" + R2_SUF + SUF
   output:
-    r1 = SCRATCH + "/trimmed/{sample}_1_trim.fastq.gz",
-    r2 = SCRATCH + "/trimmed/{sample}_2_trim.fastq.gz",
+    r1 = SCRATCH + "/trimmed/{sample}_" + R1_SUF + "_trim.fastq.gz",
+    r2 = SCRATCH + "/trimmed/{sample}_" + R2_SUF + "_trim.fastq.gz",
     # reads where trimming entirely removed the mate
     r1_unpaired = SCRATCH + "/trimmed/{sample}_1.unpaired.fastq.gz",
     r2_unpaired = SCRATCH + "/trimmed/{sample}_2.unpaired.fastq.gz"
