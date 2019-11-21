@@ -17,3 +17,22 @@ __default__:
             queue: "--partition={}"
             time: "--time={}"
             nodes: "-N {}"  # number of tasks
+
+assign_tax_otu:
+   queue: compute
+   time: 720
+   mem: 32
+   threads: 16
+
+
+dada2:
+   queue: compute
+   time: 1440
+   mem: 16
+   threads: 8
+
+assign_tax:
+   queue: compute
+   time: 1440
+   mem: 16
+   threads: 8
