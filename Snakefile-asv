@@ -15,12 +15,23 @@ INPUTDIR = config["raw_data"]
 SCRATCH = config["scratch"]
 OUTPUTDIR = config["outputDIR"]
 
+SUF = config["suffix"]
+R1_SUF = str(config["r1_suf"])
+R2_SUF = str(config["r2_suf"])
+
 # Use glob statement to find all samples in 'raw_data' directory
 ## Wildcard '{num}' must be equivalent to 'R1' or '1', meaning the read pair designation.
 SAMPLE_LIST,NUMS = glob_wildcards(INPUTDIR + "/{sample}_{num}.fastq.gz")
 # Unique the output variables from glob_wildcards
 SAMPLE_SET = set(SAMPLE_LIST)
 SET_NUMS = set(NUMS)
+
+
+# Uncomment to diagnose if snakemake is reading in wildcard variables properly
+#print(SAMPLE_SET)
+#print(SET_NUMS)
+#print(SUF)
+#print(R1_SUF)
 
 # Create final manifest file for qiime2
 MANIFEST = pd.read_csv(config["manifest"]) #Import manifest
@@ -69,7 +80,7 @@ rule all:
 
 rule fastqc:
   input:    
-    INPUTDIR + "/{sample}_{num}.fastq.gz"
+    INPUTDIR + "/{sample}_{num}" + SUF
   output:
     html = SCRATCH + "/fastqc/{sample}_{num}_fastqc.html",
     zip = SCRATCH + "/fastqc/{sample}_{num}_fastqc.zip"
@@ -81,11 +92,11 @@ rule fastqc:
 
 rule trimmomatic_pe:
   input:
-    r1 = INPUTDIR + "/{sample}_1.fastq.gz",
-    r2 = INPUTDIR + "/{sample}_2.fastq.gz"
+    r1 = INPUTDIR + "/{sample}_" + R1_SUF + SUF,
+    r2 = INPUTDIR + "/{sample}_" + R2_SUF + SUF
   output:
-    r1 = SCRATCH + "/trimmed/{sample}_1_trim.fastq.gz",
-    r2 = SCRATCH + "/trimmed/{sample}_2_trim.fastq.gz",
+    r1 = SCRATCH + "/trimmed/{sample}_" + R1_SUF + "_trim.fastq.gz",
+    r2 = SCRATCH + "/trimmed/{sample}_" + R2_SUF + "_trim.fastq.gz",
     # reads where trimming entirely removed the mate
     r1_unpaired = SCRATCH + "/trimmed/{sample}_1.unpaired.fastq.gz",
     r2_unpaired = SCRATCH + "/trimmed/{sample}_2.unpaired.fastq.gz"
