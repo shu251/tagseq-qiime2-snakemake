@@ -17,12 +17,28 @@ r2_suf: 2
 #r2_suf: R2
 
 # QIIME2-specific flags
+# Defaults for amplicon tag-sequencing - uncomment only parameters you need.
 
-## Primer removal
+## 18S default (Stoeck et al. 2010 V4 primers)
 primerF: CCAGCASCYGCGGTAATTCC
 primerR: ACTTTCGTTCTTGATYRA
 primer_err: 0.4
 primer_overlap: 3
+# Merging reads for 18S:
+minoverlap: 10
+maxdiff: 4
+minlength: 270
+
+## 16S default (Parada et al. modified EMP primers)
+primerF: GTGYCAGCMGCCGCGGTAA
+primerR: GGACTACNVGGGTWTCTAAT
+# Parada et al. 2016 MEP primers for 16S
+primer_err: 0.1
+primer_overlap: 3 
+# Merging reads for 16S
+minoverlap: 20
+maxdiff: 4
+minlength: 200
 
 ## Database
 database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.12.0.qza
@@ -38,11 +54,6 @@ training: 1000 #should be set higher for a non-test dataset
 chimera: pooled
 
 ## OTU clustering
-
-# Merge paired end reads
-minoverlap: 10
-maxdiff: 4
-minlength: 270
 
 # Quality filtering of merged reads
 minphred: 4
