@@ -57,28 +57,29 @@ snakemake --version
 
 ### _1.1 Place all raw fastq files in one place_
 
-_Two options to use test data_:
-* Download test data from Hu et al. 2018 using [SRA explorer](https://ewels.github.io/sra-explorer/) and search for *Bioproject: PRJNA393172*. Copy the output of bash script to a new file in ```tagseq-qiime2-snakemake/raw_data/``` and execute to download.
-* Use provided bash scripts to download full or subset of sequences (this script was generated using the SRA explorer)
+#### **Run with test data**
+* Migrate to raw_dir and download one of the test datasets:
+For the 18S rRNA gene tag-sequencing test data set
+```
+cd raw_dir #migrate to raw_dir directory
+bash 18S-download-testdata.sh
+```
+To make the manifest file that is required for qiime2, enable an R environment and run the provided R script: ```scripts/write-manifest-current.R```
 
 ```
-## To use provided bash script:
-# migrate to raw_data directory
-cd raw_data
+# Enable an R working environment
+conda activate r_3.5.1
 
-# Download subset of sequences (n = 10)
-bash download-subset.sh
+# Make sure you are in the directory with all the raw sequence files.
+Rscript $PATH/tagseq-qiime2-snakemake/scripts/write-manifest-current.R
 
-# or download the full set:
-# bash download.sh
+# Output file:manifest-orig.txt
 
-# Exit raw_data directory
-cd ..
 ```
 
-### **If using your own fastq files**  
+
+#### **If using your own fastq files**  
 * Place them in their own ```raw_data``` directory (see step to update config.yaml to tell snakemake where these are located).
-* Make sure they are labeled so the last numbers/letters in the file names designate the read pair. Input fastq files should be labeled either: Sample01_treatment1_R1.fastq.gz or Sample01_treatment1_1.fastq.gz
 
 ## 2. Create required files for input into Snakefile
 

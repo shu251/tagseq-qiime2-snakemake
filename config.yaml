@@ -1,9 +1,8 @@
 proj_name: Diel_18S
-raw_data: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_data
-scratch:  /vortexfs1/scratch/sarahhu/tagseq-output
+raw_data: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_dir
+scratch:  /vortexfs1/scratch/sarahhu/tagseq-18S-test
 outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake
-manifest: manifest.txt
-sample_names: SampleList.txt
+manifest: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_dir/manifest-orig.txt
 manifest-trimmed: manifest-trimmed.txt
 
 # Fastq file suffix, following the read pair designation
@@ -30,15 +29,15 @@ maxdiff: 4
 minlength: 270
 
 ## 16S default (Parada et al. modified EMP primers)
-primerF: GTGYCAGCMGCCGCGGTAA
-primerR: GGACTACNVGGGTWTCTAAT
+#primerF: GTGYCAGCMGCCGCGGTAA
+#primerR: GGACTACNVGGGTWTCTAAT
 # Parada et al. 2016 MEP primers for 16S
-primer_err: 0.1
-primer_overlap: 3 
+#primer_err: 0.1
+#primer_overlap: 3 
 # Merging reads for 16S
-minoverlap: 20
-maxdiff: 4
-minlength: 200
+#minoverlap: 20
+#maxdiff: 4
+#minlength: 200
 
 ## Database
 database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.12.0.qza

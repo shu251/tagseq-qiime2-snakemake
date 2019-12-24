@@ -27,11 +27,10 @@ SAMPLE_SET = set(SAMPLE_LIST)
 SET_NUMS = set(NUMS)
 
 # Uncomment to diagnose if snakemake is reading in wildcard variables properly
-print(SAMPLE_SET)
-print(SET_NUMS)
-
-print(SUF)
-print(R1_SUF)
+#print(SAMPLE_SET)
+#print(SET_NUMS)
+#print(SUF)
+#print(R1_SUF)
 
 # Create final manifest file for qiime2
 MANIFEST = pd.read_csv(config["manifest"]) #Import manifest
