@@ -71,6 +71,10 @@ rule all:
     q2_joined = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined.qza",
     q2_filtered = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered.qza",
     q2_filterstats = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-STATS.qza",
+    raw = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux.qzv",
+    primer = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-noprimer.qzv",
+    joined = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-joined.qzv",
+    filtered = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-joined-filtered.qzv",
     q2_dedup = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_table.qza",
     q2_dedup_seq = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered-dedup_seqs.qza",
     q2_cluster_table = SCRATCH + "/qiime2/otu/" + PROJ + "-cluster-table.qza",
@@ -223,6 +227,29 @@ rule filter_qscore:
         --p-min-quality {config[minphred]} \
         --p-quality-window {config[qualwindow]} \
         --o-filter-stats {output.q2_filterstats}"
+
+rule get_stats:
+  input:
+    q2_import = SCRATCH + "/qiime2/" + PROJ + "-PE-demux.qza",
+    q2_primerRM = SCRATCH + "/qiime2/" + PROJ + "-PE-demux-noprimer.qza",
+    q2_joined = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined.qza",
+    q2_filtered = SCRATCH + "/qiime2/otu/" + PROJ + "-PE-demux-joined-filtered.qza"
+  output:
+    raw = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux.qzv",
+    primer = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-noprimer.qzv",
+    joined = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-joined.qzv",
+    filtered = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-joined-filtered.qzv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_getviz_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    """
+     qiime demux summarize --i-data {input.q2_import} --o-visualization {output.raw}
+     qiime demux summarize --i-data {input.q2_primerRM} --o-visualization {output.primer}
+     qiime demux summarize --i-data {input.q2_joined} --o-visualization {output.joined}
+     qiime demux summarize --i-data {input.q2_filtered} --o-visualization {output.filtered}
+    """
 
 rule dedup:
   input:
