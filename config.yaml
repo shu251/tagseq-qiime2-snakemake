@@ -1,4 +1,4 @@
-proj_name: Diel_18S
+proj_name: test-18Sv4
 raw_data: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_dir
 scratch:  /vortexfs1/scratch/sarahhu/tagseq-18S-test
 outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake
@@ -61,10 +61,6 @@ qualwindow: 3
 # De novo OTU clustering
 denovo_perc_id: 0.97
 denovo_otu-thread: 1
-
-# Open reference OTU clustering
-openref_perc_id: 0.90
-otu-thread: 1
 
 # Chimera checking
 chimera-thread: 1

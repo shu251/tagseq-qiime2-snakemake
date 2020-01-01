@@ -1,5 +1,5 @@
-# Snakemake file - input raw fastq reads to generate Amplicon Sequence Variants
-## Updated Sept 16 to include clustering of Operational Taxonomic Units
+# Snakemake file - input raw fastq reads to generate ASVs
+## Last updated 1-1-2020 SHu
 configfile: "config.yaml"
 
 import io 
@@ -21,11 +21,10 @@ R2_SUF = str(config["r2_suf"])
 
 # Use glob statement to find all samples in 'raw_data' directory
 ## Wildcard '{num}' must be equivalent to 'R1' or '1', meaning the read pair designation.
-SAMPLE_LIST,NUMS = glob_wildcards(INPUTDIR + "/{sample}_{num}.fastq.gz")
+SAMPLE_LIST,NUMS = glob_wildcards(INPUTDIR + "/{sample}_{num}" + SUF)
 # Unique the output variables from glob_wildcards
 SAMPLE_SET = set(SAMPLE_LIST)
 SET_NUMS = set(NUMS)
-
 
 # Uncomment to diagnose if snakemake is reading in wildcard variables properly
 #print(SAMPLE_SET)
@@ -39,7 +38,7 @@ MANIFEST['filename'] = MANIFEST['absolute-filepath'].str.split('/').str[-1] #add
 MANIFEST.rename(columns = {'absolute-filepath':'rawreads-filepath'}, inplace = True)
 PATH_TRIMMED = "trimmed" # name of directory with trimmed reads
 NEWPATH = os.path.join(SCRATCH, PATH_TRIMMED)
-MANIFEST['filename'] = MANIFEST['filename'].str.replace(".fastq.gz", "_trim.fastq.gz")
+MANIFEST['filename'] = MANIFEST['filename'].str.replace(SUF, "_trim.fastq.gz")
 MANIFEST['absolute-filepath'] = NEWPATH+ "/" + MANIFEST['filename']    
 MANIFEST[['sample-id','absolute-filepath','direction']].set_index('sample-id').to_csv('manifest-trimmed.txt')
 MANIFEST_FINAL = config["manifest-trimmed"]
@@ -67,7 +66,10 @@ rule all:
     # QIIME2 outputs
     q2_import = SCRATCH + "/qiime2/" + PROJ + "-PE-demux.qza",
     q2_primerRM = SCRATCH + "/qiime2/" + PROJ + "-PE-demux-noprimer.qza",
-    # ASV outputs
+    #vizualization stats
+    raw = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux.qzv",
+    primer = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-noprimer.qzv",
+    #ASV outputs:
     table = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.qza",
     rep = SCRATCH + "/qiime2/asv/" + PROJ + "-rep-seqs.qza",
     stats = SCRATCH + "/qiime2/asv/" + PROJ + "-stats-dada2.qza",
@@ -76,7 +78,7 @@ rule all:
     biom = SCRATCH + "/qiime2/asv/table/feature-table.biom",
     table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
     table_tax = SCRATCH + "/qiime2/asv/tax_assigned/taxonomy.tsv",
-
+    sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza",
 
 rule fastqc:
   input:    
@@ -177,6 +179,28 @@ rule rm_primers:
        --p-error-rate {config[primer_err]} \
        --p-overlap {config[primer_overlap]} \
        --o-trimmed-sequences {output.q2_primerRM}"
+
+####
+#QC#
+####
+
+rule get_stats:
+  input:
+    q2_import = SCRATCH + "/qiime2/" + PROJ + "-PE-demux.qza",
+    q2_primerRM = SCRATCH + "/qiime2/" + PROJ + "-PE-demux-noprimer.qza"
+  output:
+    raw = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux.qzv",
+    primer = OUTPUTDIR + "/viz/" + PROJ + "-PE-demux-noprimer.qzv"
+  log:
+    SCRATCH + "/qiime2/logs/" + PROJ + "_getviz_q2.log"
+  conda:
+    "envs/qiime2-2019.4.yaml"
+  shell:
+    """
+     qiime demux summarize --i-data {input.q2_import} --o-visualization {output.raw}
+     qiime demux summarize --i-data {input.q2_primerRM} --o-visualization {output.primer}
+    """
+
 #####
 #ASV#
 #####
