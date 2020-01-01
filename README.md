@@ -163,8 +163,8 @@ This config.yaml file is set up to run with the test sequences downloaded from a
 
 * ```proj_name: Diel_18S``` Replace this with your project name. This will be what the final ASV qiime2 artifact and ASV table is named.  
 * ```raw_data: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_data``` Point config file to location of your raw fastq reads, in this case a directory called 'raw_data'   
-* ```scratch:  /vortexfs1/scratch/sarahhu``` Change this to where you want all your outputs to be written. Since I am working on a HPC, I write all of this to scratch and move it later.   
-* ```outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/''' Output directory for qiime2 visualization files to be written to. This is for QCing sequences.
+* ```scratch:  /vortexfs1/scratch/sarahhu``` Change this to where you want all your outputs to be written. Since I am working on a HPC, I write all of this to scratch and move it later.
+* ```outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/``` Output directory for qiime2 visualization files to be written to. This is for QCing sequences.
 * ```manifest: manifest.txt``` Input of manifest file that you need to provide, generated using R script or created by you.   
 * ```manifest-trimmed: manifest-trimmed.txt``` Final manifest file, the Snakemake pipeline will create this file, as the first few steps generate the trimmed fastq files which we ACTUALLY want to use in the QIIME2 part, so the Snakemake file is written to input your manifest file and modify the filepath   
 Designations for file names:
