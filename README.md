@@ -74,16 +74,15 @@ cd raw_dir #migrate to raw_dir directory
 bash 18S-download-testdata.sh
 ```
 To make the manifest file that is required for qiime2, enable an R environment and run the provided R script: ```scripts/write-manifest-current.R```
-Enable an R working environment
+```
+# Enable an R working environment
 conda activate r_3.5.1
 
 # Make sure you are in the directory with all the raw sequence files.
 Rscript $PATH/tagseq-qiime2-snakemake/scripts/write-manifest-current.R
 
 # Output file:manifest-orig.txt
-
 ```
-
 
 #### **If using your own fastq files**  
 Place them in their own ```raw_data``` directory (see step to update config.yaml to tell snakemake where these are located).   
