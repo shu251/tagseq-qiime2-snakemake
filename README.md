@@ -85,12 +85,10 @@ Rscript $PATH/tagseq-qiime2-snakemake/scripts/write-manifest-current.R
 ```
 
 #### **If using your own fastq files**  
-Place them in their own ```raw_data``` directory (see step to update config.yaml to tell snakemake where these are located).   
-Create a manifest file for these sequences. You can also follow the instructions above to use the provided R script to automatically generate one.
+1. Place them in their own ```raw_data``` directory (see step to update config.yaml to tell snakemake where these are located).   
+2. Create a manifest file for these sequences. You can also follow the instructions above to use the provided R script to automatically generate one. ```scripts/write-manifest-current.R``` detects all fastq.gz files in the curren directory and creates a manifest file ready for qiime2 import.
 
-The ```write-manifest.R``` script will input the list of fastq files it finds in ```raw_data/``` to generate a QIIME2 specific manifest file (manifest.txt) and a text file with the SRR ID list for input into snakemake and a corresponding list of sample names. Ensure you are in an environment to run an R script. [Follow these directions for more information](https://alexanderlabwhoi.github.io/post/anaconda-r-sarah/). To execute this script, enter an R environment or if already enabled, use ```Rscript``` (see below). Run it this way: ```Rscript write-manifest.R```. This will output ```manifest-orig.txt```: this is the manifest file you are looking for. However, the file path leads to the raw fastq reads before trimming. We will fix this later in the Snakefile. Alternatively$
-
-*Make your own manifest file without the R script*
+*Make your own manifest file without the R script*: 
 Format your own txt file (using a text editor or a CSV file) exactly this way. Every line must be comma separated, with sample-id, followed by the path of fastq file, followed by either "forward" or "reverse". 
 ```
 sample-id,absolute-filepath,direction
@@ -98,8 +96,8 @@ sample1,$PWD/raw_seqs_dir/Test01_full_L001_R1.fastq.gz,forward
 sample1,$PWD/raw_seqs_dir/Test01_full_L001_R2.fastq.gz,reverse
 sample2,$PWD/raw_seqs_dir/Test02_full_L001_R1.fastq.gz,forward
 sample2,$PWD/raw_seqs_dir/Test02_full_L001_R2.fastq.gz,reverse
-``
-Guidelines
+```
+Guidelines:   
 * Replace $PWD with your path
 * The fastq files can be gziped. 
 * List all of your fastq files. 
