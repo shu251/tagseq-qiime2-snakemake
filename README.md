@@ -33,10 +33,17 @@ _Operational Taxonomic Units_
 16. Generate OTU count and taxonomy tables
 17. Compile OTU count + taxonomy table
 
+
+### _Summary of workflow_
+
+<p align="center">
+  <img width="300" src="scripts/snakemake-tagseq-workflow.png">
+</p>
+
 ***
 # Set up: Before starting
-* Familiarize yourself with conda environments if you are not already [Explanation using R](https://alexanderlabwhoi.github.io/post/anaconda-r-sarah/)
-* Be familiar with the qiime2 options to determine Amplicon Sequence Variants
+* Familiarize yourself with conda environments if you are not already [Explanation using R](https://alexanderlabwhoi.github.io/post/anaconda-r-sarah/) and from [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+* Be familiar with the qiime2 options to determine Amplicon Sequence Variants or Operational Taxonomic Units
 
 _New to Snakemake?_
 If you're new to snakemake, [learn more here](https://snakemake.readthedocs.io/en/stable/) or follow a recommended [tutorial](https://github.com/ctb/2019-snakemake-ucdavis).  
@@ -173,7 +180,7 @@ Modify lines specific for OTU or ASV determination:
 * ```primerF: CCAGCASCYGCGGTAATTCC``` Forward primer sequence, in this case I'm using the V4 hypervariable region  
 * ```primerR: ACTTTCGTTCTTGATYRA``` Reverse primer sequence   
 Reference database:
-## Database
+#### Database
 * ```database: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.12.0.qza``` Reference sequence database imported as a QIIME2 artifact
 * ```database_classified: /vortexfs1/omics/huber/shu/db/pr2-db/V4-pr2_4.12.0-classifier.qza``` Classified reference database, processed be subsetting with your primer sequence and running the qiime2 classifier
 * ```database_tax: /vortexfs1/omics/huber/shu/db/pr2-db/pr2_4.12.0_tax.qza``` Replace with the taxonomy names associated with the above database
@@ -238,7 +245,7 @@ If you're unsure about parameters, consult the QIIME2 reference manual.
 
 ## 3. Run a dry run of snakemake pipeline 
 
-Use *-s* to select between the Snakemake pipelines
+Use *-s* to select between the two snakefiles
 ```
 snakemake -np -s Snakefile-asv
 snakemake -np -s Snakefile-otu
@@ -348,7 +355,7 @@ Run on HPC:
 bash submitscripts/submit-slurm-trim-stats.sh
 ## Again, an alterative is to run 'submit-slurm-trim.sh' to only run through the trimming step.
 ```
-(Or use this to trim fastq sequences)[https://github.com/shu251/qc-trim].
+[Or use this to trim fastq sequences](https://github.com/shu251/qc-trim).
 
 ***
 
@@ -367,12 +374,3 @@ bash submitscripts/submit-slurm-trim-stats.sh
 #### To do:
 * Update so R script is integrated into snakemake and creates tables with taxonomy for both ASV and OTU pipelines
 * Add in final step to generate a fasta file with fasta headers which correspond to the reference sequences
-
-
-_Summary of workflow_
-
-![workflow](scripts/snakemake-tagseq-workflow.png | width=10)
-
-<p align="center">
-  <img width="100" src="scripts/snakemake-tagseq-workflow.png">
-</p>
