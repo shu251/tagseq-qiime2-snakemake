@@ -372,3 +372,7 @@ bash submitscripts/submit-slurm-trim-stats.sh
 _Summary of workflow_
 
 ![workflow](scripts/snakemake-tagseq-workflow.png | width=10)
+
+<p align="center">
+  <img width="100" src="scripts/snakemake-tagseq-workflow.png">
+</p>
