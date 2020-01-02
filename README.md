@@ -79,6 +79,10 @@ Migrate to raw_dir and download one of the test datasets:
 ```
 cd raw_dir #migrate to raw_dir directory
 bash 18S-download-testdata.sh
+
+# if you want to run the 16S tes data:
+# bash 16S-download-testdata.sh
+
 ```
 To make the manifest file that is required for qiime2, enable an R environment and run the provided R script: ```scripts/write-manifest-current.R```
 ```
@@ -177,7 +181,7 @@ This config.yaml file is set up to run with the test sequences downloaded from a
 Designations for file names:
 * ```suffix:``` and ```r1_suf/r2_suf``` comment out ```#``` the lines not applicable to your sample names.
 Modify lines specific for OTU or ASV determination:
-* ```primerF: CCAGCASCYGCGGTAATTCC``` Forward primer sequence, in this case I'm using the V4 hypervariable region  
+* ```primerF: CCAGCASCYGCGGTAATTCC``` Forward primer sequence, in this case I'm using the V4 hypervariable region for 18S. Comment out the one you are not using, the config.yaml file already has the Stoeck et al. primers for 18S and Parada et al. primers for 16S.
 * ```primerR: ACTTTCGTTCTTGATYRA``` Reverse primer sequence   
 Reference database:
 #### Database
