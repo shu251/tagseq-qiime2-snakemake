@@ -236,7 +236,7 @@ chimera-thread: 1
 If you're unsure about parameters, consult the QIIME2 reference manual.
 
 
-## 4. Test ```snakemake``` dry run & execute full pipeline
+## 3. Run a dry run of snakemake pipeline 
 
 Use *-s* to select between the Snakemake pipelines
 ```
@@ -245,23 +245,19 @@ snakemake -np -s Snakefile-otu
 # output should be all green and display no errors
 ``` 
 
-To run the full pipeline make sure you enable the ```--use-conda``` flag. This is because snakemake uses the conda environments stored in ```envs/``` to execute rules.
-```
-# For ASVs
-snakemake --use-conda -s Snakefile-asv
+### 3.1 Enable to run on HPC with SLURM
 
-# For OTUs
-snakemake --use-conda -s Snakefile-otu
-```
+The main reason to use snakemake is that it will work with slurm on your HPC and continue to submit jobs for you. To set this up follow the instructions below.
 
-## 5. Run on HPC with SLURM
+* [Read about executing snakemake on a cluster](https://snakemake.readthedocs.io/en/stable/executable.html) and another explanation on how to execute with a submit script can be found [here](https://hpc-carpentry.github.io/hpc-python/17-cluster/).    
+* Review the submit scripts available in ```submitscripts```. Files in this directory include another config file called ```cluster.yaml```, and two scripts to submit your snakemake pipeline to the cluster with and without the dry run option.   
+* Then, open and modify the ```cluster.yaml``` to fit your machine. Then test run using the provided submit scripts.
+* Make sure to look at each step in the snakefile and consider what thread, memory, and time requirements you can submit on your HPC. You can specify these in the ```cluster.yaml``` file.    
 
-[Read about executing snakemake on a cluster](https://snakemake.readthedocs.io/en/stable/executable.html) and another explanation on how to execute with a submit script can be found [here](https://hpc-carpentry.github.io/hpc-python/17-cluster/).    
-Review the submit scripts available in ```submitscripts```. Files in this directory include another config file called ```cluster.yaml```, and two scripts to submit your snakemake pipeline to the cluster with and without the dry run option.   
-First, open and modify the ```cluster.yaml``` to fit your machine. Then test run using the provided submit scripts.
+Once the above are figured out you can run the submit scripts provided in ```submitscripts/```.
+
 ```
 # Make sure you are still in the snake-tagseq conda environment
-
 ## For ASVs:
 bash submitscripts/dry-submit-slurm-ASV.sh 
 
@@ -270,7 +266,21 @@ bash submitscripts/dry-submit-slurm-OTU.sh
 ```
 Outputs should all be green and will report how many jobs and rules snakemake plans to run. This will allow you to evaluate any error and syntax messages.  
 
-Once ready, use the submit-slurm.sh script to submit the jobs to slurm. Run with screen, tmux, or nohup.
+
+## 4.  Execute full run
+### 4.1 Start run
+To run the full pipeline make sure you enable the ```--use-conda``` flag. This is because snakemake uses the conda environments stored$
+```
+# For ASVs
+snakemake --use-conda -s Snakefile-asv
+
+# For OTUs
+snakemake --use-conda -s Snakefile-otu
+```
+Run with screen, tmux, or nohup.
+
+### 4.2 Run with HPC
+Once the dry run is successful with the dry run script, use the submit-slurm.sh script to submit the jobs to slurm. Run with screen, tmux, or nohup.
 ```
 # Full run for ASVs:
 bash submitscripts/submit-slurm-ASV.sh
@@ -280,40 +290,66 @@ bash submitscripts/submit-slurm-OTU.sh
 ```
 Run the above in *tmux* or *screen*, as it will print out the jobs it submits to SLURM. You will be able to monitor the progress this way.
 
-## 6. Output from pipeline
 
-* **ASV table:** ```[PROJ]-asv-table.tsv``` includes samples by columns and ASVs by row. Values represent number of sequences per ASV (row) in a given sample (column).  
-* **Assigned taxonomy:** ```tax_dir/taxonomy.tsv``` represents the full taxonomic name for each ASV. The same ASV identifer (string of letters and numbers under 'Feature ID') as the asv-table.  
+## 5. Output from pipeline
 
-To combine these table, you can run the R script from the ```../../qiime2/asv/``` directory.
+### 5.1 File structure
+To monitor output files migrate to the ```scratch``` directory specified in the config.yaml. 
 ```
-# Migrate to directory with .qza and .tsv outputs from snakemake pipeline
-cd ../../../qiime2/asv/
-
-# Ensure R is enabled
-# conda activate r_3.5.1 # to activate the R conda environment
-
-# Path to R script
-Rscript /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/make-asv-table.R
+├── fastqc 	#Individual fastqc files for each read
+├── logs 	#log files for all pre-qiime2 commands
+├── qiime2 	#directory with all qiime2 artifact files
+└── trimmed 	#location of all trimmed reads
+```
+Within the ```qiime2/``` directory, there is a separate directory for each of the OTU or ASV qiime2 artifact files.
+```
+├── asv #ASV artifact files from qiime2
+├── logs #all log files for qiime2 commands
+├── otu #qiime2 artifact files for OTU clustering
+├── test-18Sv4-PE-demux-noprimer.qza #artifact file post-primer removal
+└── test-18Sv4-PE-demux.qza #Initial import artifact file
 ```
 
-* **CountTable-wtax-DATE.txt** - ASV table with counts per sample and the taxonomic identities
-* **Output_stats.txt** - quick stats on results, including how many sequences per sample, and how many ASVs with only 1 or 2 sequences are in final results
+### 5.2 Generate final OTU or ASV table
+The provided R script, ```scripts/make-count-table-wtax.R```, will generate a formatted text file that includes the sequence counts per OTU or ASV and the assigned taxonomy. Run this similar to the above manifest R script.
+
+```
+# Enable an R environment
+conda activate r_3.5.1
+
+# Make sure you are in the qiime2/otu/ or qiime2/asv/ directory and can access the Rscript
+# Execute:
+Rscript $PATH/tagseq-qiime2-snakemake/scripts/make-count-table-wtax.R
+```
+Output will be a text file with the date ```CountTable-wtax-YYYY-MM-DD.txt```. The first column of the text file is the feature ID, subsequent columns list sample names. Final columns report taxonomy assignment. A second file will also be created ```CountTable-wtax-bylevel-YYYY-MM-DD.txt```, which will separate the taxonomy names out if separated by a semi colon.    
+ 
 
 Find an introduction to R for processing ASV or OTU tables [here](https://github.com/shu251/PreliminaryFigures_V4_tagseq).
 
-## 7. qiime2 visualization option
+## 6. How to quality check sequence data
 
-QIIME2 offers away to visualize the data types (artifact files) using [an interative viewer](https://docs.qiime2.org/2019.4/concepts/#data-files-visualizations). An output directory of these ```.qzv``` files will be created at the end of the Snakefile run. These files can be brought locally and [drag and dropped to here](https://view.qiime2.org). In the above QC steps, whenever a .qza file was worked on, you had the option to run this:
+### 6.1 Check overall sequence quality
+The snakemake rule, *get_stats*, writes qiime2 visualization files (.qzv) from the artifact files (.qza). These are written to the outputDIR specified in the config.yaml file. Drag and drop these to [this qiime2 visualizer site](https://view.qiime2.org). This will allow you to visualize how many sequences were at each step of the pipeline (or are included in each artifact file).   
+
+Pair this with the initial multiqc outputs to have a per sample summary of how many sequences are removed at each quality control step. This will help you diagnose any problems. The output from multiqc, which can be found in the fastqc output directory: ```PATH/fastqc/trimmed_multiqc_general_stats``` and ```trimmed_multiqc.html```. These provide a .html file and a .txt file to report a summary of all fastqc outputs. 
+
+### 6.2 Run snakemake to get quality control information
+Often we need to quality check all the sequence data before deciding the parameters of the OTU or ASV determination. To do this, follow all of the above instructions, but instead of executing the full snakemake run as is, run this command to stop it at the *get_stats* rule. Then you can import each of the .qzv files (see 6.1 above) and view how each QC step modified the sequences.   
+
+Run snakemake:
 ```
-# ../../qiime2/asv/ #In this directory
-
-# Activate a qiime2 environment (see instructions on QIIME2 website)
-conda activate qiime2-2019.4
-
-# Insert any of the .qza artifact files generated
-qiime demux summarize --i-data PROJECT-STEP.qza --o-visualization PROJECT-STEP.qzv
+snakemake --use-conda -s Snakefile-otu --until get_stats
+# Above command will run the Snakefile for OTU clustering, but will stop at the get_stats step.
+## An alternative is to run until 'multiqc' to only perform the trimming and fastqc evaluations
 ```
+
+Run on HPC:
+```
+bash submitscripts/submit-slurm-trim-stats.sh
+## Again, an alterative is to run 'submit-slurm-trim.sh' to only run through the trimming step.
+```
+(Or use this to trim fastq sequences)[https://github.com/shu251/qc-trim].
+
 ***
 
 ## References
@@ -335,4 +371,4 @@ qiime demux summarize --i-data PROJECT-STEP.qza --o-visualization PROJECT-STEP.q
 
 _Summary of workflow_
 
-![workflow](scripts/snakemake-tagseq-workflow.png)
+![workflow](scripts/snakemake-tagseq-workflow.png | width=10)
