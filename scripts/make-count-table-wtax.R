@@ -39,6 +39,6 @@ write.table(counts_wtax, file = (paste("CountTable-wtax-", Sys.Date(),".txt",sep
 
 # Optional - optimized for 16S reads from SILVA assigned taxonomy:
 tmp<-counts_wtax
-tax <- colsplit(tmp$Taxon, ";D_", c("level1","level2", "level3","level4","level5","level6","level7"))
+tax <- colsplit(tmp$Taxon, ";", c("level1","level2", "level3","level4","level5","level6","level7"))
 tmp2 <- data.frame(tmp,tax)
 write.table(tmp2, file = (paste("CountTable-wtax-bylevel-", Sys.Date(),".txt",sep="")), quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t") 
