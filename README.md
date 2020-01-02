@@ -7,32 +7,47 @@ This Snakemake pipeline can be easily scaled up to larger datasets and includes 
 Make tag-sequencing analyses higher throughput, more robust, and reproducible.
 
 ## Overview
-### _Pipeline_
-Set up  
-1. Generate manifest.txt file from a directory containing all raw .fastq files (R)
-2. Read in raw .fastq files and perform *fastqc*, *Trimmomatic*, and repeat *fastqc* on newly trimmed reads (snakemake)
-3. Modify manifest.txt file so input files are the trimmed .fastq reads
-4. Import all trimmed reads as QIIME2 artifact
-5. Remove primers with cutadapt
+### Outline
+1. Set up working directory, conda environments, and taxonomy database
+	1.1 Create and launch a conda environment to run this pipeline.
+	1.2 Place all raw fastq files in one place
+	1.3 Prep taxonomy database
+2. Modify config.yaml to run snakemake with your data
+3. Run a dry run of snakemake pipeline
+	3.1 Enable to run on HPC with SLURM
+4.  Execute full run
+	4.1 Start run
+	4.2 Run with HPC
+5. Output from pipeline
+	5.1 File structure
+	5.2 Generate final OTU or ASV table
+6. How to quality check sequence data
+	6.1 Check overall sequence quality
+	6.2 Run snakemake to get quality control information   
+
+### Snakemake pipeline
+1. Read in raw .fastq files and perform *fastqc*, *Trimmomatic*, and repeat *fastqc* on newly trimmed reads (snakemake)
+2. Modify manifest.txt file so input files are the trimmed .fastq reads
+3. Import all trimmed reads as QIIME2 artifact
+4. Remove primers with cutadapt
 
 _Amplicon Sequence Variants_  
-
+5. Generate visualization files to evaluate QC steps
 6. Run DADA2, which performs additional quality trimming, filtering, and denoising steps. Also removes chimeric sequences. Finally, determines *Amplicon Sequence Variants*
 7. Assigns taxonomy using QIIME2 feature classifer
 8. Generates ASV count and taxonomy tables
 9. Compiles ASV count + taxonomy table (R)
 
 _Operational Taxonomic Units_   
-
-10. Merged paired end reads and filter reads by qscore
-11. Dereplicate sequences
-12. Cluster into OTUs (open reference & closed reference currently written)
-13. Determine chimeras using uchime with the reference database
-14. Remove chimeras from representative sequences and cluster table
-15. Assign taxonomy using QIIME2 feature classifier
-16. Generate OTU count and taxonomy tables
-17. Compile OTU count + taxonomy table
-
+5. Merged paired end reads and filter reads by qscore
+6. Generate visualization files to evaluate QC steps
+7. Dereplicate sequences
+8. Cluster into OTUs (open reference & closed reference currently written)
+9. Determine chimeras using uchime with the reference database
+10. Remove chimeras from representative sequences and cluster table
+11. Assign taxonomy using QIIME2 feature classifier
+12. Generate OTU count and taxonomy tables
+13. Compile OTU count + taxonomy table (R)
 
 ### _Summary of workflow_
 
