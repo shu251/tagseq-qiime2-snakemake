@@ -77,8 +77,7 @@ rule all:
     sklearn = SCRATCH + "/qiime2/asv/" + PROJ +	"-tax_sklearn.qza",
     biom = SCRATCH + "/qiime2/asv/table/feature-table.biom",
     table_tsv = SCRATCH + "/qiime2/asv/" + PROJ + "-asv-table.tsv",
-    table_tax = SCRATCH + "/qiime2/asv/tax_assigned/taxonomy.tsv",
-    sklearn_otu = SCRATCH + "/qiime2/otu/" + PROJ + "-otu-tax_sklearn.qza",
+    table_tax = SCRATCH + "/qiime2/asv/tax_assigned/taxonomy.tsv"
 
 rule fastqc:
   input:    
