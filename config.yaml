@@ -1,19 +1,19 @@
-proj_name: test-18Sv4
-raw_data: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_dir
-scratch:  /vortexfs1/scratch/sarahhu/tagseq-18S-test
-outputDIR: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake
-manifest: /vortexfs1/omics/huber/shu/tagseq-qiime2-snakemake/raw_dir/manifest-orig.txt
+proj_name: slo-pier
+raw_data: /vortexfs1/omics/huber/shu/slo-pier-weekly/raw_dir
+scratch:  /vortexfs1/scratch/sarahhu/slo
+outputDIR: /vortexfs1/omics/huber/shu/slo-pier-weekly
+manifest: /vortexfs1/omics/huber/shu/slo-pier-weekly
 manifest-trimmed: manifest-trimmed.txt
 
 # Fastq file suffix, following the read pair designation
-suffix: .fastq.gz
-#suffix: _001.fastq.gz
+# suffix: .fastq.gz
+suffix: _001.fastq.gz
 
 # Read pair designations
-r1_suf: 1
-r2_suf: 2
-#r1_suf: R1
-#r2_suf: R2
+#r1_suf: 1
+#r2_suf: 2
+r1_suf: R1
+r2_suf: R2
 
 # QIIME2-specific flags
 # Defaults for amplicon tag-sequencing - uncomment only parameters you need.
